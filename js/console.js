@@ -7,6 +7,13 @@ const ConsoleController = (function() {
     let currentFilter = 'all';
     let previewFrameId = 'pc-preview-frame';
 
+    const LEVEL_ICONS = {
+        log: 'fas fa-info-circle',
+        info: 'fas fa-info-circle',
+        warn: 'fas fa-exclamation-triangle',
+        error: 'fas fa-times-circle'
+    };
+
     function init() {
         window.addEventListener('message', (e) => {
             if (e.data && e.data.source === 'IDE_CONSOLE') {
@@ -32,7 +39,7 @@ const ConsoleController = (function() {
         if (errBadge) errBadge.innerText = errs;
         if (warnBadge) warnBadge.innerText = warns;
         if (sbErrBadge) {
-            sbErrBadge.innerText = `${errs} errors`;
+            sbErrBadge.innerText = `${errs} error${errs === 1 ? '' : 's'}`;
             sbErrBadge.style.color = errs > 0 ? 'var(--danger)' : 'var(--text-muted)';
         }
     }
@@ -57,17 +64,22 @@ const ConsoleController = (function() {
                 return renderTableEntry(item);
             }
 
+            // FIX: `icon` was never defined -> ReferenceError killed the whole console
+            const icon = LEVEL_ICONS[item.level] || LEVEL_ICONS.log;
+
             let fixBtn = '';
             if (item.level === 'error') {
-                const safeMsg = encodeURIComponent(item.message);
-                fixBtn = `<button class="btn-ai-fix" onclick="AIAgent.fixError(decodeURIComponent('${safeMsg}'))"><i class="fas fa-wand-magic-sparkles"></i> Fix with AI</button>`;
+                // FIX: encodeURIComponent does not escape ' -> inline handler broke.
+                // Use a properly escaped JS string literal instead.
+                const onclick = IDEUtils.attrExpression(`AIAgent.fixError(${IDEUtils.jsString(item.message)})`);
+                fixBtn = `<button class="btn-ai-fix" onclick="${onclick}"><i class="fas fa-wand-magic-sparkles"></i> Fix with AI</button>`;
             }
 
             return `
                 <div class="console-entry ${item.level}">
-                    <span class="console-time">${item.time || ''}</span>
+                    <span class="console-time">${IDEUtils.escapeHtml(item.time || '')}</span>
                     <span class="console-icon"><i class="${icon}"></i></span>
-                    <span class="console-text">${escapeHtml(item.message)} ${fixBtn}</span>
+                    <span class="console-text">${IDEUtils.escapeHtml(item.message)} ${fixBtn}</span>
                 </div>
             `;
         }).join('');
@@ -79,7 +91,7 @@ const ConsoleController = (function() {
         const data = item.tableData;
         let html = `
             <div class="console-entry log">
-                <span class="console-time">${item.time || ''}</span>
+                <span class="console-time">${IDEUtils.escapeHtml(item.time || '')}</span>
                 <span class="console-icon"><i class="fas fa-table" style="color:var(--accent);"></i></span>
                 <div class="console-text">
         `;
@@ -95,7 +107,7 @@ const ConsoleController = (function() {
                             <thead>
                                 <tr>
                                     <th>(index)</th>
-                                    ${keys.map(k => `<th>${escapeHtml(k)}</th>`).join('')}
+                                    ${keys.map(k => `<th>${IDEUtils.escapeHtml(k)}</th>`).join('')}
                                 </tr>
                             </thead>
                             <tbody>
@@ -105,7 +117,7 @@ const ConsoleController = (function() {
                                             <td style="color:var(--text-faint);">${idx}</td>
                                             ${keys.map(k => {
                                                 const val = (typeof row === 'object' && row !== null) ? row[k] : row;
-                                                return `<td>${escapeHtml(String(val !== undefined ? val : ''))}</td>`;
+                                                return `<td>${IDEUtils.escapeHtml(String(val !== undefined ? val : ''))}</td>`;
                                             }).join('')}
                                         </tr>
                                     `;
@@ -125,8 +137,8 @@ const ConsoleController = (function() {
                         <tbody>
                             ${Object.entries(data).map(([k, v]) => `
                                 <tr>
-                                    <td style="color:var(--text-faint);">${escapeHtml(k)}</td>
-                                    <td>${escapeHtml(String(v))}</td>
+                                    <td style="color:var(--text-faint);">${IDEUtils.escapeHtml(k)}</td>
+                                    <td>${IDEUtils.escapeHtml(String(v))}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -181,10 +193,6 @@ const ConsoleController = (function() {
                 time: new Date().toLocaleTimeString()
             });
         }
-    }
-
-    function escapeHtml(str) {
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
     return {

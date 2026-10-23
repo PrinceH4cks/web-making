@@ -4,7 +4,7 @@
 
 .pc-preview-pane {
     flex: 1;
-    min-width: 280px;
+    min-width: 80px;
     background: #0d0f14;
     display: flex;
     flex-direction: column;
@@ -31,8 +31,8 @@
 }
 
 .pc-preview-pane.fullscreen {
-    top: 0 !important; left: 0 !important;
-    width: 100vw !important; height: 100vh !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100% !important; height: 100% !important; height: 100dvh !important;
     border-radius: 0; resize: none; z-index: 6000;
     display: flex !important;
 }
@@ -41,13 +41,13 @@
 .pc-preview-header {
     background: var(--bg-activity);
     color: var(--text-main);
-    height: 38px;
-    min-height: 38px;
+    height: 34px;
+    min-height: 34px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
-    font-size: 12px;
+    padding: 0 10px;
+    font-size: 11px;
     font-weight: 600;
     user-select: none;
     border-bottom: 1px solid var(--border);
@@ -79,8 +79,8 @@
     cursor: pointer;
     color: var(--text-muted);
     transition: 0.15s;
-    font-size: 13px;
-    padding: 5px 7px;
+    font-size: 11.5px;
+    padding: 4px 6px;
     border-radius: 4px;
 }
 .preview-tools i:hover {
@@ -172,27 +172,29 @@
 /* Fullscreen Modal for Mobile Viewports */
 .preview-modal {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%; height: 100dvh;
     background: #000;
     z-index: 9000;
     display: none;
     flex-direction: column;
 }
 .preview-modal .preview-header {
-    height: 48px;
+    height: 44px;
+    flex-shrink: 0;
     background: var(--bg-activity);
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
-    font-size: 14px;
+    padding: 0 14px;
+    font-size: 12px;
     font-weight: 600;
     border-bottom: 1px solid var(--border);
 }
 .preview-modal iframe {
-    flex: 1;
+    flex: 1 1 0%;
+    min-height: 0;
     width: 100%;
     height: 100%;
     border: none;

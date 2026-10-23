@@ -147,10 +147,13 @@ const CommandPalette = (function() {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
+                // FIX: modulo by zero produced NaN when the list was empty
+                if (filteredCommands.length === 0) return;
                 selectedIndex = (selectedIndex + 1) % filteredCommands.length;
                 renderList();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
+                if (filteredCommands.length === 0) return;
                 selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
                 renderList();
             } else if (e.key === 'Enter') {

@@ -1,10 +1,13 @@
 /* ==========================================================================
    Master Web IDE Ultra - Nested Virtual File System (VFS)
+   Supports: nested folders (incl. EMPTY folders), recursive rename/delete,
+   debounced persistence and tree action buttons.
    ========================================================================== */
 
 const VFS = (function() {
     const STORAGE_KEY = 'master_ide_ultra_vfs';
-    
+    const SAVE_DEBOUNCE = 400;
+
     // Default initial project files
     const defaultProject = {
         "index.html": {
@@ -165,89 +168,245 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
     };
 
     let files = {};
+    let folders = new Set();          // explicit folder paths (may be empty)
     let openFolders = new Set(['css', 'js']);
 
+    let saveTimer = null;
+    let saveWarned = false;
+
+    // ────────────────────────────────────────────────────────────── PERSISTENCE
     function init() {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                files = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                files = parsed && parsed.files ? parsed.files : {};
+                folders = new Set((parsed && parsed.folders) ? parsed.folders : []);
+                // Restore the expanded/collapsed state of the folder tree
+                if (parsed && Array.isArray(parsed.openFolders) && parsed.openFolders.length) {
+                    openFolders = new Set(parsed.openFolders);
+                }
+                // Backward compatibility: derive missing folders from file paths
+                Object.keys(files).forEach(p => ensureParentFolders(p));
             } else {
                 files = JSON.parse(JSON.stringify(defaultProject));
-                save();
+                folders = new Set();
+                Object.keys(files).forEach(p => ensureParentFolders(p));
+                persist();
             }
         } catch (e) {
             files = JSON.parse(JSON.stringify(defaultProject));
+            folders = new Set();
+            Object.keys(files).forEach(p => ensureParentFolders(p));
         }
     }
 
-    function save() {
+    function persist() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                files: files,
+                folders: Array.from(folders),
+                openFolders: Array.from(openFolders)
+            }));
+            saveWarned = false;
         } catch (e) {
             console.error("VFS Save Error:", e);
+            if (!saveWarned) {
+                saveWarned = true;
+                if (typeof App !== 'undefined' && App.showToast) {
+                    App.showToast("Browser storage is full — changes are NOT persisted!", "error");
+                }
+            }
         }
     }
 
+    /** Debounced write. Pass `true` to flush immediately. */
+    function save(immediate = false) {
+        if (immediate) {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            persist();
+            return;
+        }
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            saveTimer = null;
+            persist();
+        }, SAVE_DEBOUNCE);
+    }
+
+    function flushPendingSave() {
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            persist();
+        }
+    }
+
+    /** Drops a pending write WITHOUT persisting (used when erasing all local data). */
+    function cancelPendingSave() {
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+        }
+    }
+
+    window.addEventListener('beforeunload', flushPendingSave);
+
+    // ────────────────────────────────────────────────────────────── PATH HELPERS
+    function normalizePath(p) {
+        return String(p || '')
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .replace(/\/+$/, '')
+            .replace(/\/{2,}/g, '/');
+    }
+
+    function ensureParentFolders(path) {
+        const parts = String(path).split('/');
+        parts.pop();
+        let acc = '';
+        parts.forEach(part => {
+            acc = acc ? acc + '/' + part : part;
+            folders.add(acc);
+        });
+    }
+
+    // ────────────────────────────────────────────────────────────── CRUD
     function get(path) {
-        return files[path] || null;
+        return files[normalizePath(path)] || null;
     }
 
     function set(path, content, type) {
-        if (!path) return;
+        if (!path) return false;
         path = normalizePath(path);
+        if (!path) return false;
         if (!type) type = detectType(path);
-        
+
         files[path] = {
             type: type,
-            content: content
+            content: content === null || content === undefined ? '' : content
         };
+        ensureParentFolders(path);
         save();
+        return true;
     }
 
+    /** Deletes a file OR a folder (with all of its descendants). */
     function remove(path) {
         path = normalizePath(path);
-        if (files[path]) {
-            delete files[path];
-            save();
-            return true;
-        }
-        return false;
+        if (!path) return false;
+
+        const prefix = path + '/';
+        let removed = false;
+
+        Object.keys(files).forEach(p => {
+            if (p === path || p.startsWith(prefix)) {
+                delete files[p];
+                removed = true;
+            }
+        });
+
+        Array.from(folders).forEach(f => {
+            if (f === path || f.startsWith(prefix)) {
+                folders.delete(f);
+                removed = true;
+            }
+        });
+
+        if (removed) save();
+        return removed;
     }
 
+    /** Renames a file OR a folder (with all of its descendants). */
     function rename(oldPath, newPath) {
         oldPath = normalizePath(oldPath);
         newPath = normalizePath(newPath);
-        if (files[oldPath]) {
-            files[newPath] = files[oldPath];
-            files[newPath].type = detectType(newPath);
-            delete files[oldPath];
-            save();
-            return true;
+
+        if (!oldPath || !newPath || oldPath === newPath) return false;
+        if (files[newPath] || folders.has(newPath)) return false;
+
+        const prefix = oldPath + '/';
+        let moved = false;
+
+        // Move files (and every descendant of a folder)
+        Object.keys(files).forEach(p => {
+            let target = null;
+            if (p === oldPath) {
+                target = newPath;
+            } else if (p.startsWith(prefix)) {
+                target = newPath + p.slice(oldPath.length);
+            }
+            if (target) {
+                files[target] = {
+                    type: detectType(target),
+                    content: files[p].content
+                };
+                delete files[p];
+                moved = true;
+            }
+        });
+
+        // Move folders
+        if (moved || folders.has(oldPath)) {
+            const nextFolders = new Set();
+            Array.from(folders).forEach(f => {
+                if (f === oldPath) {
+                    nextFolders.add(newPath);
+                    moved = true;
+                } else if (f.startsWith(prefix)) {
+                    nextFolders.add(newPath + f.slice(oldPath.length));
+                    moved = true;
+                } else {
+                    nextFolders.add(f);
+                }
+            });
+            folders = nextFolders;
         }
-        return false;
+
+        if (moved) {
+            ensureParentFolders(newPath);
+            save();
+        }
+        return moved;
     }
 
-    function normalizePath(p) {
-        return p.replace(/\\/g, '/').replace(/^\/+/, '');
+    /** Creates an explicitly empty folder. */
+    function addFolder(path) {
+        path = normalizePath(path);
+        if (!path) return false;
+        if (files[path] || folders.has(path)) return false;
+        folders.add(path);
+        ensureParentFolders(path);
+        openFolders.add(path);
+        save();
+        return true;
+    }
+
+    function hasFolder(path) {
+        return folders.has(normalizePath(path));
     }
 
     function detectType(path) {
-        if (path.endsWith('.html') || path.endsWith('.htm')) return 'htmlmixed';
-        if (path.endsWith('.css')) return 'css';
-        if (path.endsWith('.js')) return 'javascript';
-        if (path.endsWith('.json')) return 'javascript';
-        if (path.endsWith('.md')) return 'markdown';
+        const p = String(path).toLowerCase();
+        if (p.endsWith('.html') || p.endsWith('.htm')) return 'htmlmixed';
+        if (p.endsWith('.css')) return 'css';
+        if (p.endsWith('.js') || p.endsWith('.mjs') || p.endsWith('.jsx')) return 'javascript';
+        if (p.endsWith('.json')) return 'application/json';
+        if (p.endsWith('.xml') || p.endsWith('.svg')) return 'xml';
+        if (p.endsWith('.md') || p.endsWith('.markdown')) return 'markdown';
         return 'text';
     }
 
     function getIconClass(path) {
-        if (path.endsWith('.html')) return 'fab fa-html5 icon-html';
-        if (path.endsWith('.css')) return 'fab fa-css3-alt icon-css';
-        if (path.endsWith('.js')) return 'fab fa-js icon-js';
-        if (path.endsWith('.json')) return 'fas fa-code icon-json';
-        if (path.endsWith('.svg')) return 'fas fa-bezier-curve icon-svg';
-        if (path.endsWith('.md')) return 'fab fa-markdown icon-md';
+        const p = String(path).toLowerCase();
+        if (p.endsWith('.html') || p.endsWith('.htm')) return 'fab fa-html5 icon-html';
+        if (p.endsWith('.css')) return 'fab fa-css3-alt icon-css';
+        if (p.endsWith('.js') || p.endsWith('.jsx')) return 'fab fa-js icon-js';
+        if (p.endsWith('.json')) return 'fas fa-code icon-json';
+        if (p.endsWith('.svg')) return 'fas fa-bezier-curve icon-svg';
+        if (p.endsWith('.xml')) return 'fas fa-code icon-json';
+        if (p.endsWith('.md')) return 'fab fa-markdown icon-md';
         return 'fas fa-file-code';
     }
 
@@ -255,42 +414,44 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
         return Object.keys(files).sort();
     }
 
-    function resetToTemplate(templateObj) {
-        files = JSON.parse(JSON.stringify(templateObj || defaultProject));
-        save();
+    function getAllFolders() {
+        return Array.from(folders).sort();
     }
 
-    // 🌳 Build Hierarchical Tree for Explorer
+    function resetToTemplate(templateObj) {
+        files = JSON.parse(JSON.stringify(templateObj || defaultProject));
+        folders = new Set();
+        Object.keys(files).forEach(p => ensureParentFolders(p));
+        save(true);
+    }
+
+    // ────────────────────────────────────────────────────────────── TREE
     function buildTree() {
-        const root = { name: '', isFolder: true, children: {} };
+        const root = { name: '', path: '', isFolder: true, children: {} };
 
-        for (const filePath of Object.keys(files)) {
-            const parts = filePath.split('/');
-            let curr = root;
-
-            for (let i = 0; i < parts.length; i++) {
-                const part = parts[i];
-                const isLast = i === parts.length - 1;
-
-                if (isLast) {
-                    curr.children[part] = {
-                        name: part,
-                        path: filePath,
-                        isFolder: false
-                    };
-                } else {
-                    if (!curr.children[part]) {
-                        curr.children[part] = {
-                            name: part,
-                            path: parts.slice(0, i + 1).join('/'),
-                            isFolder: true,
-                            children: {}
-                        };
-                    }
-                    curr = curr.children[part];
+        function ensureFolderNode(parent, path) {
+            const parts = path.split('/');
+            let node = parent;
+            let acc = '';
+            parts.forEach(part => {
+                acc = acc ? acc + '/' + part : part;
+                if (!node.children[part] || !node.children[part].isFolder) {
+                    node.children[part] = { name: part, path: acc, isFolder: true, children: {} };
                 }
-            }
+                node = node.children[part];
+            });
+            return node;
         }
+
+        getAllFolders().forEach(f => ensureFolderNode(root, f));
+
+        Object.keys(files).forEach(fp => {
+            const parts = fp.split('/');
+            const fileName = parts.pop();
+            const parent = parts.length ? ensureFolderNode(root, parts.join('/')) : root;
+            parent.children[fileName] = { name: fileName, path: fp, isFolder: false };
+        });
+
         return root;
     }
 
@@ -300,10 +461,12 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
         } else {
             openFolders.add(folderPath);
         }
+        // Persist the tree state so the folders stay expanded after a refresh
+        save();
     }
 
-    // 🌳 Render Nested Folder Tree DOM
-    function renderTree(container, activePath, onFileSelect, onContextMenu) {
+    /** Render the nested folder tree DOM. */
+    function renderTree(container, activePath, onFileSelect, onContextMenu, actions = {}) {
         container.innerHTML = '';
         const root = buildTree();
 
@@ -328,24 +491,40 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
                         <div class="tree-info">
                             <i class="fas fa-chevron-${isOpen ? 'down' : 'right'}" style="font-size: 10px; width: 10px; color: var(--text-faint);"></i>
                             <i class="fas fa-folder${isOpen ? '-open' : ''} icon-folder"></i>
-                            <span>${item.name}</span>
+                            <span>${IDEUtils.escapeHtml(item.name)}</span>
                         </div>
                         <div class="tree-actions">
-                            <i class="fas fa-plus" title="New File Inside" data-action="new-in-folder" data-path="${item.path}"></i>
-                            <i class="fas fa-trash action-del" title="Delete Folder" data-action="del-folder" data-path="${item.path}"></i>
+                            <i class="fas fa-plus" title="New File Inside" data-action="new-in-folder" data-path="${IDEUtils.escapeAttr(item.path)}"></i>
+                            <i class="fas fa-trash action-del" title="Delete Folder" data-action="del-folder" data-path="${IDEUtils.escapeAttr(item.path)}"></i>
                         </div>
                     `;
 
                     row.addEventListener('click', (e) => {
                         if (e.target.closest('.tree-actions')) return;
                         toggleFolder(item.path);
-                        renderTree(container, activePath, onFileSelect, onContextMenu);
+                        renderTree(container, activePath, onFileSelect, onContextMenu, actions);
                     });
 
                     row.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         if (onContextMenu) onContextMenu(e, item.path, true);
                     });
+
+                    // Hover action buttons (previously dead UI)
+                    const newBtn = row.querySelector('[data-action="new-in-folder"]');
+                    if (newBtn && actions.onNewFile) {
+                        newBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            actions.onNewFile(item.path);
+                        });
+                    }
+                    const delBtn = row.querySelector('[data-action="del-folder"]');
+                    if (delBtn && actions.onDelete) {
+                        delBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            actions.onDelete(item.path);
+                        });
+                    }
 
                     li.appendChild(row);
 
@@ -361,11 +540,11 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
                     row.innerHTML = `
                         <div class="tree-info">
                             <i class="${icon}"></i>
-                            <span>${item.name}</span>
+                            <span>${IDEUtils.escapeHtml(item.name)}</span>
                         </div>
                         <div class="tree-actions">
-                            <i class="fas fa-pen" title="Rename" data-action="rename" data-path="${item.path}"></i>
-                            <i class="fas fa-trash action-del" title="Delete" data-action="delete" data-path="${item.path}"></i>
+                            <i class="fas fa-pen" title="Rename" data-action="rename" data-path="${IDEUtils.escapeAttr(item.path)}"></i>
+                            <i class="fas fa-trash action-del" title="Delete" data-action="delete" data-path="${IDEUtils.escapeAttr(item.path)}"></i>
                         </div>
                     `;
 
@@ -379,6 +558,21 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
                         if (onContextMenu) onContextMenu(e, item.path, false);
                     });
 
+                    const renameBtn = row.querySelector('[data-action="rename"]');
+                    if (renameBtn && actions.onRename) {
+                        renameBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            actions.onRename(item.path);
+                        });
+                    }
+                    const delBtn = row.querySelector('[data-action="delete"]');
+                    if (delBtn && actions.onDelete) {
+                        delBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            actions.onDelete(item.path);
+                        });
+                    }
+
                     li.appendChild(row);
                 }
 
@@ -389,16 +583,19 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
         renderNodes(root, container);
     }
 
-    // 📦 ZIP Export with full folder structure
+    // ────────────────────────────────────────────────────────────── EXPORT
+    /** ZIP Export with full folder structure */
     function exportZip(projectName = "Master_IDE_Ultra_Project") {
         if (typeof JSZip === 'undefined') {
             alert("JSZip not loaded!");
             return;
         }
+        flushPendingSave();
+
         const zip = new JSZip();
-        for (const filePath of Object.keys(files)) {
+        Object.keys(files).forEach(filePath => {
             zip.file(filePath, files[filePath].content);
-        }
+        });
         zip.generateAsync({ type: "blob" }).then(blob => {
             saveAs(blob, `${projectName}.zip`);
         });
@@ -411,13 +608,19 @@ console.log('🚀 Master IDE Ultra Ready & Loaded!');`
         set,
         remove,
         rename,
+        addFolder,
+        hasFolder,
         getAllPaths,
+        getAllFolders,
         buildTree,
         renderTree,
         resetToTemplate,
         exportZip,
         normalizePath,
         detectType,
-        save
+        getIconClass,
+        save,
+        flushPendingSave,
+        cancelPendingSave
     };
 })();

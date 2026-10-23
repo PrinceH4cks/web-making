@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Master Web IDE Ultra - Next-Gen Studio</title>
 
     <!-- Google Typography & FontAwesome 6 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- CodeMirror 5 Core & Themes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/nord.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
 
     <!-- ZIP Utilities -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -30,15 +36,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
 
     <!-- 🚀 MODULAR CSS ARCHITECTURE 🚀 -->
-    <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/editor.css">
-    <link rel="stylesheet" href="css/preview.css">
-    <link rel="stylesheet" href="css/console.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/ai-agent.css">
+    <link rel="stylesheet" href="css/tokens.css?v=7.0">
+    <link rel="stylesheet" href="css/layout.css?v=9.0">
+    <link rel="stylesheet" href="css/editor.css?v=8.0">
+    <link rel="stylesheet" href="css/preview.css?v=8.0">
+    <link rel="stylesheet" href="css/console.css?v=7.0">
+    <link rel="stylesheet" href="css/components.css?v=7.0">
+    <link rel="stylesheet" href="css/ai-agent.css?v=10.0">
+    <link rel="stylesheet" href="css/api-hub.css?v=7.0">
 </head>
+
 <body data-theme="dracula">
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         RESTORE SAVED APPEARANCE — runs BEFORE the first paint so the saved
+         theme / editor font size are applied without any flash of the default.
+         Everything is read from THIS device's localStorage only.
+         ══════════════════════════════════════════════════════════════════════ -->
+    <script>
+        (function () {
+            try {
+                var raw = localStorage.getItem('master_ide_prefs');
+                if (!raw) return;
+                var p = JSON.parse(raw);
+                if (p && p.theme) document.body.setAttribute('data-theme', p.theme);
+                if (p && p.fontSize) {
+                    document.documentElement.style.setProperty('--editor-font-size', p.fontSize + 'px');
+                }
+            } catch (e) { /* storage unavailable */ }
+        })();
+    </script>
 
     <!-- Hidden Input for Importing Local Files -->
     <input type="file" id="file-uploader" multiple style="display:none;" onchange="handleFileUpload(event)">
@@ -47,7 +74,8 @@
     <nav class="top-nav">
         <div class="nav-left">
             <i class="fas fa-bars menu-btn" onclick="App.toggleSidebar(true)" title="Explorer Menu"></i>
-            <div class="brand-logo" onclick="CommandPalette.open()" title="Click to open Command Palette (Ctrl+Shift+P)">
+            <div class="brand-logo" onclick="CommandPalette.open()"
+                title="Click to open Command Palette (Ctrl+Shift+P)">
                 <i class="fas fa-cube"></i>
                 <span>Master IDE</span>
                 <span class="ultra-badge">ULTRA</span>
@@ -76,16 +104,27 @@
             </div>
 
             <!-- Command Palette Shortcut Button -->
-            <button class="btn hide-mobile" onclick="CommandPalette.open()" title="Command Palette (Ctrl + Shift + P / F1)">
+            <button class="btn hide-mobile" onclick="CommandPalette.open()"
+                title="Command Palette (Ctrl + Shift + P / F1)">
                 <i class="fas fa-terminal" style="color:var(--accent);"></i>
                 <span>Commands</span>
                 <kbd>Ctrl+P</kbd>
             </button>
 
             <!-- 🤖 AI AGENT TRIGGER BUTTON 🤖 -->
-            <button class="btn hide-mobile" onclick="AIAgent.togglePanel()" title="Autonomous AI Agent Studio (Ctrl + Shift + A)" style="border-color: rgba(var(--accent-rgb), 0.45); background: rgba(var(--accent-rgb), 0.08);">
+            <button class="btn hide-mobile" onclick="openAIAgentPanel()"
+                title="Autonomous AI Agent Studio (Ctrl + Shift + A)"
+                style="border-color: rgba(var(--accent-rgb), 0.45); background: rgba(var(--accent-rgb), 0.08); cursor: pointer;">
                 <i class="fas fa-robot" style="color:var(--accent);"></i>
                 <span style="color:#fff; font-weight:600;">AI Agent</span>
+            </button>
+
+            <!-- 🔑 AI SETTINGS / FREELLMAPI ROUTER BUTTON 🔑 -->
+            <button class="btn hide-mobile" onclick="openAISettingsModal('agent')"
+                title="AI Settings & FreeLLMAPI Router"
+                style="border-color: rgba(139, 92, 246, 0.45); background: rgba(139, 92, 246, 0.12); cursor: pointer;">
+                <i class="fas fa-key" style="color:var(--accent, #8b5cf6);"></i>
+                <span style="color:#fff; font-weight:600;">AI Settings</span>
             </button>
 
             <!-- 1-Click Beautifier -->
@@ -111,9 +150,10 @@
                 <i class="fas fa-download"></i>
                 <span class="hide-mobile">Export</span>
             </button>
-            
+
             <!-- Live Preview Toggle -->
-            <button class="btn btn-primary" onclick="App.togglePreview()" id="toggle-preview-btn" title="Toggle Live Preview">
+            <button class="btn btn-primary" onclick="App.togglePreview()" id="toggle-preview-btn"
+                title="Toggle Live Preview">
                 <i class="fas fa-play"></i> Run & Preview
             </button>
         </div>
@@ -125,35 +165,51 @@
 
         <!-- 📱 MOBILE ACTION SHEET DROPDOWN 📱 -->
         <ul class="mobile-actions-menu" id="mobile-actions-menu">
-            <li class="mobile-menu-item" onclick="AIAgent.togglePanel()"><i class="fas fa-robot"></i> AI Agent Studio</li>
-            <li class="mobile-menu-item" onclick="AIAgent.openSettings()"><i class="fas fa-key"></i> AI API Key & Model</li>
-            <li class="mobile-menu-item" onclick="EditorController.formatCode()"><i class="fas fa-wand-magic-sparkles"></i> Format Code</li>
-            <li class="mobile-menu-item" onclick="App.openModal('packages-modal')"><i class="fas fa-box-open"></i> CDN Packages</li>
-            <li class="mobile-menu-item" onclick="App.openModal('templates-modal')"><i class="fas fa-shapes"></i> Load Template</li>
+            <li class="mobile-menu-item" onclick="openAIAgentPanel()"><i class="fas fa-robot"></i> AI Agent Studio
+            </li>
+            <li class="mobile-menu-item" onclick="AIAgent.openSettings()"><i class="fas fa-key"></i> AI API Key & Model
+            </li>
+            <li class="mobile-menu-item" onclick="APIHub.open()"><i class="fas fa-plug"></i> API Connect Hub (Multi-API)
+            </li>
+            <li class="mobile-menu-item" onclick="EditorController.formatCode()"><i
+                    class="fas fa-wand-magic-sparkles"></i> Format Code</li>
+            <li class="mobile-menu-item" onclick="App.openModal('packages-modal')"><i class="fas fa-box-open"></i> CDN
+                Packages</li>
+            <li class="mobile-menu-item" onclick="App.openModal('templates-modal')"><i class="fas fa-shapes"></i> Load
+                Template</li>
             <li class="mobile-menu-item" onclick="VFS.exportZip()"><i class="fas fa-download"></i> Export ZIP</li>
-            <li class="mobile-menu-item" onclick="App.openModal('settings-modal')"><i class="fas fa-cog"></i> Settings</li>
-            <li class="mobile-menu-item" onclick="App.openModal('shortcuts-modal')"><i class="fas fa-keyboard"></i> Shortcuts</li>
-            <li class="mobile-menu-item" onclick="App.resetProject()"><i class="fas fa-rotate-left"></i> Reset Project</li>
+            <li class="mobile-menu-item" onclick="App.openSettings()"><i class="fas fa-cog"></i> Settings
+            </li>
+            <li class="mobile-menu-item" onclick="App.openModal('shortcuts-modal')"><i class="fas fa-keyboard"></i>
+                Shortcuts</li>
+            <li class="mobile-menu-item" onclick="App.resetProject()"><i class="fas fa-rotate-left"></i> Reset Project
+            </li>
+            <li class="mobile-menu-item" onclick="App.clearAllLocalData()"><i class="fas fa-shield-halved"></i> Data
+                &amp; Privacy</li>
         </ul>
     </nav>
 
     <!-- 🚀 STUDIO MAIN BODY 🚀 -->
     <div class="studio-body">
-        
+
         <div class="sidebar-overlay" id="sidebar-overlay" onclick="App.toggleSidebar(false)"></div>
 
         <!-- 🚀 ACTIVITY BAR 🚀 -->
         <aside class="activity-bar">
             <i class="fas fa-folder-tree active" title="Explorer" onclick="App.toggleSidebar()"></i>
-            <i class="fas fa-robot" title="Autonomous AI Agent (Ctrl + Shift + A)" onclick="AIAgent.togglePanel()"></i>
+            <i class="fas fa-robot" title="Autonomous AI Agent (Ctrl + Shift + A)" onclick="openAIAgentPanel()"></i>
+            <i class="fas fa-key" title="AI Agent Settings" onclick="openAISettingsModal('agent')"
+                style="color:var(--accent, #8b5cf6);"></i>
+            <i class="fas fa-plug" title="API Connect Hub — connect many AI APIs"
+                onclick="openAISettingsModal('connect')"></i>
             <i class="fas fa-box-open" title="CDN Packages" onclick="App.openModal('packages-modal')"></i>
             <i class="fas fa-shapes" title="Templates Hub" onclick="App.openModal('templates-modal')"></i>
             <i class="fas fa-terminal" title="Developer Console (Ctrl + `)" onclick="App.toggleConsole()"></i>
-            
+
             <div class="bottom-icons">
                 <i class="fas fa-palette" title="Theme Selector" onclick="openThemePicker()"></i>
                 <i class="fas fa-keyboard" title="Keyboard Shortcuts" onclick="App.openModal('shortcuts-modal')"></i>
-                <i class="fas fa-cog" title="Settings" onclick="App.openModal('settings-modal')"></i>
+                <i class="fas fa-cog" title="Settings" onclick="App.openSettings()"></i>
             </div>
         </aside>
 
@@ -164,8 +220,11 @@
                 <div class="icons">
                     <i class="fas fa-file-circle-plus" title="New File" onclick="App.openNewFileModal()"></i>
                     <i class="fas fa-folder-plus" title="New Folder" onclick="App.openNewFolderModal()"></i>
-                    <i class="fas fa-file-import" title="Import Files" onclick="document.getElementById('file-uploader').click()"></i>
+                    <i class="fas fa-file-import" title="Import Files"
+                        onclick="document.getElementById('file-uploader').click()"></i>
                     <i class="fas fa-rotate-left" title="Reset Project" onclick="App.resetProject()"></i>
+                    <i class="fas fa-times sidebar-close-btn" title="Close Explorer"
+                        onclick="App.toggleSidebar(false)"></i>
                 </div>
             </div>
             <ul class="file-tree" id="file-tree"></ul>
@@ -173,13 +232,13 @@
 
         <!-- 🚀 WORKSPACE & SPLIT SCREEN 🚀 -->
         <main class="workspace">
-            
+
             <!-- Editor Tabs Bar -->
             <div class="tabs-container" id="tabs-container"></div>
 
             <!-- Split Work Area -->
             <div class="split-work-area" id="split-work-area">
-                
+
                 <!-- Left Section: Code Editor & Bottom Console Drawer -->
                 <div class="editor-section" id="editor-section">
                     <div id="editor-container"></div>
@@ -188,22 +247,27 @@
                     <div class="console-drawer collapsed" id="console-drawer">
                         <div class="console-header">
                             <div class="console-tabs">
-                                <button class="console-tab-btn active" data-filter="all" onclick="ConsoleController.setFilter('all')">
+                                <button class="console-tab-btn active" data-filter="all"
+                                    onclick="ConsoleController.setFilter('all')">
                                     <i class="fas fa-terminal"></i> All
                                 </button>
-                                <button class="console-tab-btn" data-filter="error" onclick="ConsoleController.setFilter('error')">
+                                <button class="console-tab-btn" data-filter="error"
+                                    onclick="ConsoleController.setFilter('error')">
                                     Errors <span class="badge-count error" id="console-err-count">0</span>
                                 </button>
-                                <button class="console-tab-btn" data-filter="warn" onclick="ConsoleController.setFilter('warn')">
+                                <button class="console-tab-btn" data-filter="warn"
+                                    onclick="ConsoleController.setFilter('warn')">
                                     Warnings <span class="badge-count warn" id="console-warn-count">0</span>
                                 </button>
-                                <button class="console-tab-btn" data-filter="table" onclick="ConsoleController.setFilter('table')">
+                                <button class="console-tab-btn" data-filter="table"
+                                    onclick="ConsoleController.setFilter('table')">
                                     Tables
                                 </button>
                             </div>
                             <div class="console-actions">
                                 <i class="fas fa-ban" title="Clear Console" onclick="ConsoleController.clear()"></i>
-                                <i class="fas fa-chevron-up" id="console-toggle-icon" title="Expand / Collapse" onclick="App.toggleConsole()"></i>
+                                <i class="fas fa-chevron-up" id="console-toggle-icon" title="Expand / Collapse"
+                                    onclick="App.toggleConsole()"></i>
                             </div>
                         </div>
 
@@ -211,7 +275,9 @@
 
                         <div class="console-input-row">
                             <span>&gt;</span>
-                            <input type="text" id="console-eval-input" placeholder="Type JavaScript expression and press Enter..." onkeydown="if(event.key==='Enter'){ConsoleController.evalCommand(this.value); this.value='';}">
+                            <input type="text" id="console-eval-input"
+                                placeholder="Type JavaScript expression and press Enter..."
+                                onkeydown="if(event.key==='Enter'){ConsoleController.evalCommand(this.value); this.value='';}">
                         </div>
                     </div>
                 </div>
@@ -225,24 +291,32 @@
                         <div class="preview-title">
                             <i class="fas fa-bolt"></i> Live Output
                         </div>
-                        
+
                         <div class="preview-tools">
-                            <i class="fas fa-mobile-alt" title="Mobile Frame (iPhone)" onclick="App.setDeviceSize('mobile')" id="icon-mobile"></i>
-                            <i class="fas fa-tablet-alt" title="Tablet Frame (iPad)" onclick="App.setDeviceSize('tablet')" id="icon-tablet"></i>
-                            <i class="fas fa-desktop active" title="Desktop Fluid (100%)" onclick="App.setDeviceSize('desktop')" id="icon-desktop"></i>
+                            <i class="fas fa-mobile-alt" title="Mobile Frame (iPhone)"
+                                onclick="App.setDeviceSize('mobile')" id="icon-mobile"></i>
+                            <i class="fas fa-tablet-alt" title="Tablet Frame (iPad)"
+                                onclick="App.setDeviceSize('tablet')" id="icon-tablet"></i>
+                            <i class="fas fa-desktop active" title="Desktop Fluid (100%)"
+                                onclick="App.setDeviceSize('desktop')" id="icon-desktop"></i>
                             <div class="tool-divider"></div>
                             <i class="fas fa-rotate-right" title="Hard Refresh" onclick="App.updatePreview()"></i>
-                            <i class="fas fa-arrow-up-right-from-square" title="Open in New Tab" onclick="App.openPreviewInNewTab()"></i>
-                            <i class="fas fa-clone" title="Floating Window Mode" onclick="App.toggleFloat()" id="icon-float"></i>
-                            <i class="fas fa-expand" title="Fullscreen" onclick="App.toggleFullscreen()" id="icon-fullscreen"></i>
+                            <i class="fas fa-arrow-up-right-from-square" title="Open in New Tab"
+                                onclick="App.openPreviewInNewTab()"></i>
+                            <i class="fas fa-clone" title="Floating Window Mode" onclick="App.toggleFloat()"
+                                id="icon-float"></i>
+                            <i class="fas fa-expand" title="Fullscreen" onclick="App.toggleFullscreen()"
+                                id="icon-fullscreen"></i>
                             <div class="tool-divider"></div>
-                            <i class="fas fa-times" title="Close Preview Pane" onclick="App.togglePreview()" style="color:var(--danger)"></i>
+                            <i class="fas fa-times" title="Close Preview Pane" onclick="App.togglePreview()"
+                                style="color:var(--danger)"></i>
                         </div>
                     </div>
-                    
+
                     <div class="preview-bg-area">
                         <div class="iframe-device-wrapper desktop" id="device-wrapper">
-                            <iframe id="pc-preview-frame" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
+                            <iframe id="pc-preview-frame"
+                                sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
                         </div>
                     </div>
                 </div>
@@ -251,10 +325,15 @@
 
             <!-- 🚀 SUPERCHARGED MOBILE CODING TOOLBAR 🚀 -->
             <div class="mobile-bar" id="mobile-bar">
-                <button class="sym-btn sym-btn-action" onclick="EditorController.undo()" title="Undo"><i class="fas fa-rotate-left"></i></button>
-                <button class="sym-btn sym-btn-action" onclick="EditorController.redo()" title="Redo"><i class="fas fa-rotate-right"></i></button>
+                <button class="sym-btn sym-btn-action sym-btn-ai" onclick="openAIAgentPanel()" title="Open AI Agent"><i
+                        class="fas fa-robot"></i> AI</button>
+                <button class="sym-btn sym-btn-action" onclick="EditorController.undo()" title="Undo"><i
+                        class="fas fa-rotate-left"></i></button>
+                <button class="sym-btn sym-btn-action" onclick="EditorController.redo()" title="Redo"><i
+                        class="fas fa-rotate-right"></i></button>
                 <button class="sym-btn sym-btn-action" onclick="EditorController.insertTab()" title="Tab">Tab</button>
-                <button class="sym-btn sym-btn-action" onclick="EditorController.formatCode()" title="Format"><i class="fas fa-wand-magic-sparkles"></i></button>
+                <button class="sym-btn sym-btn-action" onclick="EditorController.formatCode()" title="Format"><i
+                        class="fas fa-wand-magic-sparkles"></i></button>
                 <button class="sym-btn" onclick="insertSymbol('<')">&lt;</button>
                 <button class="sym-btn" onclick="insertSymbol('>')">&gt;</button>
                 <button class="sym-btn" onclick="insertSymbol('</')">&lt;/</button>
@@ -273,47 +352,116 @@
             </div>
 
         </main>
+    </div>
 
-        <!-- 🤖 AUTONOMOUS AI AGENT STUDIO PANEL 🤖 -->
-        <aside class="ai-studio-panel" id="ai-studio-panel">
-            <div class="ai-header">
-                <div class="ai-header-title">
-                    <i class="fas fa-robot"></i>
-                    <span>AI Agent</span>
-                    <span class="ai-model-tag" id="ai-model-tag">Gemini 2.5</span>
+    <!-- 🤖 AUTONOMOUS AI AGENT STUDIO PANEL (REDESIGNED ULTRA EDITION) 🤖 -->
+    <aside class="ai-studio-panel" id="ai-studio-panel">
+        <!-- ↔️ DRAGGABLE LEFT-EDGE RESIZE HANDLE ↔️ -->
+        <div class="ai-panel-resizer" id="ai-panel-resizer" title="Drag to Resize AI Chat Panel"></div>
+
+        <!-- Modern Header -->
+        <div class="ai-header">
+            <div class="ai-header-title">
+                <div class="ai-header-icon-wrap">
+                    <i class="fas fa-brain"></i>
+                    <span class="ai-live-pulse"></span>
                 </div>
-                <div class="ai-header-actions">
-                    <i class="fas fa-key" title="API Key & Model Settings" onclick="AIAgent.openSettings()"></i>
-                    <i class="fas fa-trash-can" title="Clear Chat History" onclick="AIAgent.clearChat()"></i>
-                    <i class="fas fa-times" title="Close Panel" onclick="AIAgent.togglePanel(false)"></i>
+                <div>
+                    <div
+                        style="font-weight:800; font-size:15px; letter-spacing:0.3px; color:#fff; display:flex; align-items:center; gap:6px;">
+                        AI Chat
+                    </div>
+                    <span id="ai-header-sub" style="display:none;"></span>
                 </div>
+                <span class="ai-model-tag" id="ai-model-tag" onclick="openAISettingsModal('connect')"
+                    title="Click to configure AI Router">
+                    Gemini 2.5
+                </span>
             </div>
-
-            <div class="ai-chat-stream" id="ai-chat-stream"></div>
-
-            <!-- Thinking / Running Indicator -->
-            <div class="ai-thinking" id="ai-thinking">
-                <div class="ai-spinner"></div>
-                <span>AI Agent is writing code & executing tools...</span>
-            </div>
-
-            <!-- Quick Starter Chips -->
-            <div class="ai-chips-wrap">
-                <span class="ai-chip" onclick="AIAgent.sendMessage('Create a modern glassmorphic landing page with smooth CSS animations')">✨ Glassmorphic Page</span>
-                <span class="ai-chip" onclick="AIAgent.sendMessage('Add dark and light mode toggle switch with local storage persistence')">🌙 Dark Mode Toggle</span>
-                <span class="ai-chip" onclick="AIAgent.sendMessage('Build an interactive 3D particle canvas background')">🎮 3D Particles</span>
-                <span class="ai-chip" onclick="AIAgent.sendMessage('Inspect the project code and fix any bugs or performance issues')">🐛 Debug & Refactor</span>
-            </div>
-
-            <!-- Prompt Input Area -->
-            <div class="ai-input-wrap">
-                <textarea class="ai-textarea" id="ai-prompt-input" placeholder="Ask AI Agent to write code or create website..." rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); AIAgent.sendMessage();}"></textarea>
-                <button class="ai-send-btn" id="ai-send-btn" onclick="AIAgent.sendMessage()" title="Send Prompt (Enter)">
-                    <i class="fas fa-paper-plane"></i>
+            <div class="ai-header-actions">
+                <button class="ai-icon-btn" onclick="openAISettingsModal('connect')"
+                    title="API Keys & FreeLLMAPI Router">
+                    <i class="fas fa-key"></i>
+                </button>
+                <button class="ai-icon-btn" onclick="AIAgent.clearChat()" title="Clear Chat History">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+                <button class="ai-icon-btn" id="ai-expand-btn" onclick="AIAgent.toggleWideMode()"
+                    title="Toggle Wide View (Stretch to Left)">
+                    <i class="fas fa-arrows-left-right-to-line" id="ai-expand-icon"></i>
+                </button>
+                <button class="ai-icon-btn ai-icon-close" onclick="openAIAgentPanel()" title="Close Panel (Esc)">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-        </aside>
-    </div>
+        </div>
+
+        <!-- Active Context Bar -->
+        <div class="ai-context-bar" id="ai-context-bar">
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--accent);">
+                <i class="fas fa-file-code"></i> <span id="ai-active-file-label">Editing: index.html</span>
+            </span>
+            <span style="font-size:10px; color:var(--text-faint);" id="ai-vfs-files-count">3 files in project</span>
+        </div>
+
+        <!-- Main Chat Stream -->
+        <div class="ai-chat-stream" id="ai-chat-stream"></div>
+
+        <!-- Thinking / Running Indicator -->
+        <div class="ai-thinking" id="ai-thinking">
+            <div class="ai-spinner"></div>
+            <span id="ai-thinking-text">AI Agent is writing code & executing tools...</span>
+        </div>
+
+        <!-- Quick Starter Chips -->
+        <div class="ai-chips-wrap" id="ai-chips-wrap">
+            <span class="ai-chip"
+                onclick="AIAgent.sendMessage('Create a modern glassmorphic landing page with smooth CSS animations')">
+                ✨ Glassmorphic Page
+            </span>
+            <span class="ai-chip"
+                onclick="AIAgent.sendMessage('Add dark and light mode toggle switch with local storage persistence')">
+                🌙 Dark Mode Toggle
+            </span>
+            <span class="ai-chip" onclick="AIAgent.sendMessage('Build an interactive 3D particle canvas background')">
+                🎮 3D Particles
+            </span>
+            <span class="ai-chip"
+                onclick="AIAgent.sendMessage('Inspect the project code and fix any bugs or performance issues')">
+                🐛 Debug & Refactor
+            </span>
+            <span class="ai-chip"
+                onclick="AIAgent.sendMessage('Build a sleek responsive e-commerce product gallery with shopping cart')">
+                🛒 E-Commerce Gallery
+            </span>
+        </div>
+
+        <!-- Prompt Input Area (Unified Modern Box with Inside Plus & Send Buttons) -->
+        <div class="ai-input-wrap">
+            <div class="ai-input-box" id="ai-input-box">
+                <!-- Image Attachment Preview Card -->
+                <div class="ai-attachment-preview" id="ai-attachment-preview" style="display:none;"></div>
+
+                <textarea class="ai-textarea" id="ai-prompt-input"
+                    placeholder="Ask AI Agent to write code or create website..." rows="1" enterkeyhint="enter"
+                    oninput="AIAgent.autoResize(this)" onpaste="AIAgent.handleInputPaste(event)"
+                    onkeydown="AIAgent.handleInputKeydown(event)"></textarea>
+                <div class="ai-input-bar">
+                    <div class="ai-input-actions-left">
+                        <input type="file" id="ai-image-input" accept="image/*" style="display:none;"
+                            onchange="AIAgent.handleImageUpload(event)">
+                        <button type="button" class="ai-attach-btn" id="ai-attach-btn"
+                            onclick="AIAgent.triggerImageUpload()" title="Attach image or photo (+)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <button class="ai-send-btn" id="ai-send-btn" onclick="AIAgent.sendMessage()" title="Send Prompt">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
 
     <!-- 🚀 BOTTOM STATUS BAR 🚀 -->
     <footer class="status-bar">
@@ -326,7 +474,8 @@
             <div class="status-item hide-mobile">
                 <i class="fas fa-code-branch"></i> main
             </div>
-            <div class="status-item hide-mobile" onclick="App.toggleSplitOrientation()" title="Toggle Vertical / Horizontal Split">
+            <div class="status-item hide-mobile" onclick="App.toggleSplitOrientation()"
+                title="Toggle Vertical / Horizontal Split">
                 <i class="fas fa-table-columns"></i> Split Layout
             </div>
         </div>
@@ -344,7 +493,7 @@
     <div class="preview-modal" id="mobile-preview-modal">
         <div class="preview-header">
             <span><i class="fas fa-globe" style="color:var(--accent); margin-right:6px;"></i> Live Mobile Output</span>
-            <button class="btn btn-danger" onclick="document.getElementById('mobile-preview-modal').style.display='none'">
+            <button class="btn btn-danger" onclick="App.closeMobilePreview()">
                 <i class="fas fa-times"></i> Close
             </button>
         </div>
@@ -356,7 +505,8 @@
         <div class="palette-box">
             <div class="palette-input-wrap">
                 <i class="fas fa-chevron-right"></i>
-                <input type="text" id="palette-input" class="palette-input" placeholder="Type a command or search actions...">
+                <input type="text" id="palette-input" class="palette-input"
+                    placeholder="Type a command or search actions...">
             </div>
             <ul class="palette-list" id="palette-list"></ul>
         </div>
@@ -367,7 +517,8 @@
         <li class="context-menu-item" id="ctx-new-file"><i class="fas fa-file-circle-plus"></i> New File Inside</li>
         <li class="context-menu-item" id="ctx-rename"><i class="fas fa-pen"></i> Rename</li>
         <div class="context-menu-divider"></div>
-        <li class="context-menu-item" id="ctx-delete" style="color:var(--danger);"><i class="fas fa-trash" style="color:var(--danger);"></i> Delete</li>
+        <li class="context-menu-item" id="ctx-delete" style="color:var(--danger);"><i class="fas fa-trash"
+                style="color:var(--danger);"></i> Delete</li>
     </ul>
 
     <!-- 🚀 MODAL: NEW FILE 🚀 -->
@@ -381,7 +532,8 @@
             <div class="modal-content">
                 <div class="input-group">
                     <label>File Path (e.g. app.js, css/theme.css, components/card.html)</label>
-                    <input type="text" id="new-filename-input" class="input-control" placeholder="filename.ext" onkeydown="if(event.key==='Enter') App.confirmCreateFile()">
+                    <input type="text" id="new-filename-input" class="input-control" placeholder="filename.ext"
+                        onkeydown="if(event.key==='Enter') App.confirmCreateFile()">
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn" onclick="appendExt('.html')">+ .html</button>
@@ -408,7 +560,8 @@
             <div class="modal-content">
                 <div class="input-group">
                     <label>Folder Path (e.g. assets, components, utils)</label>
-                    <input type="text" id="new-foldername-input" class="input-control" placeholder="folder-name" onkeydown="if(event.key==='Enter') App.confirmCreateFolder()">
+                    <input type="text" id="new-foldername-input" class="input-control" placeholder="folder-name"
+                        onkeydown="if(event.key==='Enter') App.confirmCreateFolder()">
                 </div>
             </div>
             <div class="modal-footer">
@@ -429,7 +582,8 @@
             <div class="modal-content">
                 <div class="input-group">
                     <label>New Path</label>
-                    <input type="text" id="rename-input" class="input-control" onkeydown="if(event.key==='Enter') App.confirmRename()">
+                    <input type="text" id="rename-input" class="input-control"
+                        onkeydown="if(event.key==='Enter') App.confirmRename()">
                 </div>
             </div>
             <div class="modal-footer">
@@ -451,14 +605,17 @@
                 <div class="input-group">
                     <label>Add Custom CDN Link (CSS or JS URL)</label>
                     <div style="display:flex; gap:8px;">
-                        <input type="text" id="custom-cdn-url" class="input-control" placeholder="https://cdn.example.com/library.js">
-                        <button class="btn btn-primary" onclick="PackageManager.injectCustomUrl(document.getElementById('custom-cdn-url').value); document.getElementById('custom-cdn-url').value='';">
+                        <input type="text" id="custom-cdn-url" class="input-control"
+                            placeholder="https://cdn.example.com/library.js">
+                        <button class="btn btn-primary"
+                            onclick="PackageManager.injectCustomUrl(document.getElementById('custom-cdn-url').value); document.getElementById('custom-cdn-url').value='';">
                             Inject
                         </button>
                     </div>
                 </div>
 
-                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
+                <label
+                    style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
                     Popular 1-Click Libraries
                 </label>
                 <div class="package-grid" id="package-grid-container"></div>
@@ -479,7 +636,8 @@
             </div>
             <div class="modal-content">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-                    Select a starter to jumpstart your development. Loading a template will replace files in your workspace.
+                    Select a starter to jumpstart your development. Loading a template will replace files in your
+                    workspace.
                 </p>
                 <div class="template-grid" id="template-grid-container"></div>
             </div>
@@ -510,15 +668,53 @@
                 </div>
                 <div class="input-group">
                     <label>Editor Font Size (px)</label>
-                    <input type="number" id="font-size-input" class="input-control" value="14.5" min="10" max="28" onchange="EditorController.setFontSize(this.value)">
+                    <input type="number" id="font-size-input" class="input-control" value="14.5" min="10" max="28"
+                        onchange="EditorController.setFontSize(this.value)">
                 </div>
                 <div class="input-group">
                     <label>Tab Indentation (spaces)</label>
-                    <input type="number" id="tab-size-input" class="input-control" value="2" min="2" max="8" onchange="EditorController.setTabSize(this.value)">
+                    <input type="number" id="tab-size-input" class="input-control" value="2" min="2" max="8"
+                        onchange="EditorController.setTabSize(this.value)">
+                </div>
+                <div class="input-group">
+                    <label>Code Line Wrapping (Word Wrap)</label>
+                    <select class="input-control" id="line-wrapping-select"
+                        onchange="EditorController.setLineWrapping(this.value === 'true')">
+                        <option value="false">Off — Single Line (Scroll Horizontally) [Default]</option>
+                        <option value="true">On — Wrap Long Lines</option>
+                    </select>
                 </div>
                 <div class="input-group">
                     <label>Live Preview Delay (ms)</label>
-                    <input type="number" id="delay-input" class="input-control" value="400" min="100" max="2000">
+                    <input type="number" id="delay-input" class="input-control" value="400" min="100" max="2000"
+                        onchange="App.setPreviewDelay(this.value)">
+                </div>
+
+                <!-- 🧩 APPEARANCE PRESETS -->
+                <div style="margin-top:6px; padding-top:12px; border-top:1px solid var(--border);">
+                    <button class="btn btn-secondary" onclick="App.resetAppearance()">
+                        <i class="fas fa-rotate-left"></i> Reset Appearance to Defaults
+                    </button>
+                </div>
+
+                <!-- 🛡️ DATA PRIVACY -->
+                <div
+                    style="margin-top:18px; padding:14px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,0.02);">
+                    <div
+                        style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; margin-bottom:8px;">
+                        <i class="fas fa-shield-halved" style="color:var(--accent,#8b5cf6);"></i>
+                        Your Data &amp; Privacy
+                    </div>
+                    <p style="font-size:11.5px; color:var(--text-muted); line-height:1.6; margin-bottom:12px;">
+                        Master Web IDE Ultra has <b>no backend server</b>. Everything you create — project files,
+                        your AI API key, and chat history — is stored <b>only in this browser on this device</b>
+                        (localStorage). Nothing is uploaded to us, and no user can ever see another user's data.
+                        The only data that leaves your device is what you explicitly send to your chosen AI provider
+                        when you press Send in the AI Agent.
+                    </p>
+                    <button class="btn btn-danger" onclick="App.clearAllLocalData()">
+                        <i class="fas fa-trash-can"></i> Erase All Local Data
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -536,29 +732,40 @@
                 <i class="fas fa-times modal-close" onclick="App.closeModal('shortcuts-modal')"></i>
             </div>
             <div class="modal-content" style="font-size: 13px;">
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Command Palette</span>
                     <kbd>Ctrl + Shift + P / F1</kbd>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Save & Update Preview</span>
                     <kbd>Ctrl + S</kbd>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Format Document</span>
                     <kbd>Shift + Alt + F</kbd>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Toggle Developer Console</span>
                     <kbd>Ctrl + `</kbd>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Toggle Explorer Sidebar</span>
                     <kbd>Ctrl + B</kbd>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted);">Hard Refresh Preview</span>
                     <kbd>Ctrl + Enter</kbd>
+                </div>
+                <div
+                    style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                    <span style="color:var(--text-muted);">Open AI Agent Studio</span>
+                    <kbd>Ctrl + Shift + A</kbd>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:8px 0;">
                     <span style="color:var(--text-muted);">Code Snippets (Emmet)</span>
@@ -571,46 +778,490 @@
         </div>
     </div>
 
-    <!-- 🚀 MODAL: AI AGENT SETTINGS (BYOK) 🚀 -->
+    <!-- 🚀 MODAL: AI STUDIO & ENGINE SETTINGS 🚀 -->
     <div class="modal-overlay" id="ai-settings-modal">
-        <div class="modal-box">
+        <div class="modal-box ai-settings-large-box">
             <div class="modal-handle"></div>
             <div class="modal-header">
-                <h3><i class="fas fa-brain" style="color:var(--accent, #8b5cf6);"></i> AI Agent Settings (BYOK)</h3>
+                <h3><i class="fas fa-brain" style="color:var(--accent, #8b5cf6);"></i> AI Studio Settings</h3>
                 <i class="fas fa-times modal-close" onclick="App.closeModal('ai-settings-modal')"></i>
             </div>
+
+            <!-- 🚀 CLEAN 4-TAB NAVIGATION STRIP 🚀 -->
+            <div class="ai-modal-tabs" id="ai-modal-tabs">
+                <button class="ai-modal-tab active" id="tab-btn-agent" onclick="AIAgent.switchModalTab('agent')">
+                    <i class="fas fa-robot"></i> AI Agent
+                </button>
+                <button class="ai-modal-tab" id="tab-btn-apihub-connect"
+                    onclick="AIAgent.switchModalTab('apihub-connect')">
+                    <i class="fas fa-plug"></i> Connect APIs (83)
+                </button>
+                <button class="ai-modal-tab" id="tab-btn-router" onclick="AIAgent.switchModalTab('router')">
+                    <i class="fas fa-route"></i> Auto Router
+                </button>
+                <button class="ai-modal-tab" id="tab-btn-apihub-usage" onclick="AIAgent.switchModalTab('apihub-usage')">
+                    <i class="fas fa-chart-pie"></i> Usage &amp; Quota
+                </button>
+            </div>
+
             <div class="modal-content">
-                <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
-                    Connect your preferred AI provider with your own API key. The agent autonomously creates, edits, and debugs code across your project files.
+                <!-- TAB 0: AI AGENT SETTINGS -->
+                <div id="ai-tab-agent" class="ai-modal-tab-content active" style="display:block;">
+                    <div class="ai-clean-head">
+                        <div>
+                            <h4><i class="fas fa-robot"></i> AI Code Agent</h4>
+                            <span class="ai-clean-sub">Select provider &amp; model or use Auto Router across all
+                                connected APIs.</span>
+                        </div>
+                        <span class="conn-badge conn-idle" id="ai-agent-connected-badge">
+                            <i class="fas fa-plug"></i>
+                            <span id="ai-agent-connected-count">Checking APIs...</span>
+                        </span>
+                    </div>
+
+                    <!-- Connected Providers Mini Status Bar -->
+                    <div id="ai-connected-summary-box" class="ai-connected-summary-box"></div>
+
+                    <div class="ai-config-grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;">
+                        <div class="input-group">
+                            <label for="ai-agent-provider-select"><i class="fas fa-server"></i> Active Provider</label>
+                            <select id="ai-agent-provider-select" class="input-control"
+                                onchange="AIAgent.handleAgentProviderChange(this.value)">
+                                <option value="auto">⚡ All Providers (Auto Router Mode)</option>
+                                <optgroup id="ai-agent-connected-optgroup" label="Connected Providers">
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="ai-agent-model-select"><i class="fas fa-microchip"></i> Active Model</label>
+                            <select id="ai-agent-model-select" class="input-control"
+                                onchange="AIAgent.handleAgentModelChange(this.value)">
+                                <option value="auto">⚡ Auto (Best Live Model)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 🎛️ ADVANCED ENGINE TUNING DECK (LOCKED/EDITABLE) 🎛️ -->
+                    <div class="ai-tuning-card" id="ai-tuning-card">
+                        <div class="ai-tuning-header">
+                            <div class="ai-tuning-title-wrap">
+                                <div class="ai-tuning-icon">
+                                    <i class="fas fa-sliders"></i>
+                                </div>
+                                <div>
+                                    <div class="ai-tuning-title">
+                                        <span>Engine Fine-Tuning</span>
+                                        <span class="ai-tuning-state-badge locked" id="ai-tuning-state-badge">
+                                            <i class="fas fa-lock"></i> Locked
+                                        </span>
+                                    </div>
+                                    <div class="ai-tuning-sub">Accuracy, creativity &amp; autonomous tool execution
+                                        limits</div>
+                                </div>
+                            </div>
+
+                            <div class="ai-tuning-actions">
+                                <div class="ai-tuning-summary" id="ai-tuning-summary">
+                                    <span class="ai-tuning-chip" id="chip-temp" title="Temperature">
+                                        <i class="fas fa-temperature-half" style="color:#38bdf8;"></i> <b
+                                            id="chip-temp-val">0.20</b>
+                                    </span>
+                                    <span class="ai-tuning-chip" id="chip-steps" title="Max Tool Steps">
+                                        <i class="fas fa-shoe-prints" style="color:#a855f7;"></i> <b
+                                            id="chip-steps-val">8 Steps</b>
+                                    </span>
+                                </div>
+
+                                <button type="button" class="btn btn-secondary btn-sm ai-tuning-btn"
+                                    id="ai-tuning-default-btn" onclick="AIAgent.resetTuningDefaults()"
+                                    title="Reset to default values (0.20 & 8 steps)">
+                                    <i class="fas fa-rotate-left"></i> Default
+                                </button>
+
+                                <button type="button" class="btn btn-secondary btn-sm ai-tuning-btn ai-tuning-edit-btn"
+                                    id="ai-tuning-edit-btn" onclick="AIAgent.toggleTuningEdit()"
+                                    title="Unlock sliders to modify">
+                                    <i class="fas fa-pen-to-square"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ai-tuning-body" id="ai-tuning-body">
+                            <!-- Quick Profile Presets Bar -->
+                            <div class="ai-tuning-presets">
+                                <span class="ai-presets-label"><i class="fas fa-wand-magic-sparkles"></i>
+                                    Presets:</span>
+                                <button type="button" class="ai-preset-chip"
+                                    onclick="AIAgent.applyTuningPreset('balanced')">
+                                    🎯 Balanced (0.2 / 8)
+                                </button>
+                                <button type="button" class="ai-preset-chip"
+                                    onclick="AIAgent.applyTuningPreset('precise')">
+                                    ⚡ Strict Code (0.05 / 6)
+                                </button>
+                                <button type="button" class="ai-preset-chip"
+                                    onclick="AIAgent.applyTuningPreset('creative')">
+                                    🎨 Creative (0.7 / 12)
+                                </button>
+                                <button type="button" class="ai-preset-chip"
+                                    onclick="AIAgent.applyTuningPreset('power')">
+                                    🚀 Full Power (0.2 / 18)
+                                </button>
+                            </div>
+
+                            <div class="ai-tuning-grid">
+                                <!-- Temperature Control -->
+                                <div class="ai-tuning-field">
+                                    <div class="ai-tuning-field-head">
+                                        <label for="ai-temp-input">
+                                            <i class="fas fa-temperature-half" style="color:#38bdf8;"></i> Temperature
+                                        </label>
+                                        <span class="ai-range-badge" id="ai-temp-val">0.20</span>
+                                    </div>
+                                    <input type="range" id="ai-temp-input" min="0" max="1" step="0.05" value="0.2"
+                                        disabled oninput="AIAgent.handleTempInput(this.value)">
+                                    <div class="ai-slider-ticks">
+                                        <span>0.0 Strict</span>
+                                        <span class="tick-active">0.2 Code (Default)</span>
+                                        <span>0.7 Creative</span>
+                                        <span>1.0 Wild</span>
+                                    </div>
+                                </div>
+
+                                <!-- Max Tool Steps Control -->
+                                <div class="ai-tuning-field">
+                                    <div class="ai-tuning-field-head">
+                                        <label for="ai-steps-input">
+                                            <i class="fas fa-shoe-prints" style="color:#a855f7;"></i> Max Tool Steps
+                                        </label>
+                                        <span class="ai-range-badge" id="ai-steps-val">8</span>
+                                    </div>
+                                    <input type="range" id="ai-steps-input" min="1" max="20" step="1" value="8" disabled
+                                        oninput="AIAgent.handleStepsInput(this.value)">
+                                    <div class="ai-slider-ticks">
+                                        <span>1 Quick</span>
+                                        <span class="tick-active">8 Balanced (Default)</span>
+                                        <span>15 Deep</span>
+                                        <span>20 Max</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 10px;">
+                        <label for="ai-custom-rules-input"><i class="fas fa-terminal"></i> Custom System Rules</label>
+                        <textarea id="ai-custom-rules-input" class="input-control" rows="2"
+                            placeholder="e.g. Always use clean vanilla JS, modular CSS, preserve existing code structure..."></textarea>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label>AI Provider</label>
-                    <select id="ai-provider-select" class="input-control" onchange="AIAgent.updateProviderFields()">
-                        <option value="gemini">Google Gemini (Recommended - Free Tier Available)</option>
-                        <option value="deepseek">DeepSeek (V3 / R1 - Ultra Cost-Effective)</option>
-                        <option value="groq">Groq (Ultra-Fast Llama 3.3)</option>
-                        <option value="openrouter">OpenRouter (Claude 3.5 / GPT-4o / etc.)</option>
-                        <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
-                        <option value="custom">Custom / OpenCode / Localhost (Ollama)</option>
-                    </select>
+
+                <!-- TAB 1: API CONNECT HUB INTEGRATED CONTENT -->
+                <div id="ai-tab-apihub" class="ai-modal-tab-content">
+                    <div id="api-hub-body-modal"></div>
                 </div>
-                <div class="input-group">
-                    <label>API Key</label>
-                    <input type="password" id="ai-api-key-input" class="input-control" placeholder="Paste your API key here (e.g. AIzaSy... or sk-...)">
-                    <span style="font-size:11px; color:var(--text-muted); margin-top:4px; display:block;">Your key is stored locally in your browser and is never shared.</span>
-                </div>
-                <div class="input-group">
-                    <label>Model Name</label>
-                    <input type="text" id="ai-model-input" class="input-control" placeholder="e.g. gemini-2.5-flash or deepseek-chat">
-                </div>
-                <div class="input-group" id="ai-base-url-group" style="display:none;">
-                    <label>Custom Base URL / Endpoint</label>
-                    <input type="text" id="ai-base-url-input" class="input-control" placeholder="http://localhost:11434/v1 or https://openrouter.ai/api/v1">
+
+                <!-- TAB 2: DYNAMIC AUTO MODEL ROUTER ENGINE -->
+                <div id="ai-tab-router" class="ai-modal-tab-content" style="display:none;">
+                    <div class="input-group" id="ai-router-panel" style="border-top:none; padding-top:0; margin-top:0;">
+
+                        <!-- Currently Running Model Badge -->
+                        <div class="ai-router-live-card">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span class="ai-router-live-label">
+                                    <i class="fas fa-circle-dot fa-spin" style="color:var(--success);"></i> Live Active
+                                    Model
+                                </span>
+                                <span id="ai-running-status-badge" class="conn-badge conn-ok" style="font-size:10px;">
+                                    Auto Select Active
+                                </span>
+                            </div>
+                            <div id="ai-running-model-name" class="ai-router-live-name">
+                                ⚡ Auto Router Active (All Connected APIs)
+                            </div>
+                            <div id="ai-running-model-sub" class="ai-router-live-sub">
+                                Will automatically pick the best live model among all connected APIs upon prompt.
+                            </div>
+                        </div>
+
+                        <label
+                            style="display:flex; align-items:center; gap:8px; justify-content:space-between; margin-bottom:10px;">
+                            <span style="font-size:13px; font-weight:700; color:#fff;"><i class="fas fa-route"
+                                    style="color:var(--accent,#8b5cf6);"></i> Auto Router Engine</span>
+                            <label class="rt-switch" title="Toggle Auto Select vs Manual Mode">
+                                <input type="checkbox" id="ai-router-enabled" checked
+                                    onchange="AIAgent.setRouterEnabled(this.checked)">
+                                <span class="rt-slider"></span>
+                            </label>
+                        </label>
+
+                        <!-- 🎛️ AUTO ROUTER CONTROLS CARD (LOCKED/EDITABLE DECK) 🎛️ -->
+                        <div class="ai-tuning-card" id="ai-router-controls-card">
+                            <div class="ai-tuning-header">
+                                <div class="ai-tuning-title-wrap">
+                                    <div class="ai-tuning-icon"
+                                        style="background:linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(139, 92, 246, 0.1)); border-color:rgba(56, 189, 248, 0.35); color:#38bdf8;">
+                                        <i class="fas fa-sliders"></i>
+                                    </div>
+                                    <div>
+                                        <div class="ai-tuning-title">
+                                            <span>Router Policy &amp; Time Budget</span>
+                                            <span class="ai-tuning-state-badge locked" id="ai-router-state-badge">
+                                                <i class="fas fa-lock"></i> Locked
+                                            </span>
+                                        </div>
+                                        <div class="ai-tuning-sub">Priority strategy, maximum execution budget &amp;
+                                            race hedging</div>
+                                    </div>
+                                </div>
+
+                                <div class="ai-tuning-actions">
+                                    <div class="ai-tuning-summary">
+                                        <span class="ai-tuning-chip" title="Active Time Budget">
+                                            <i class="fas fa-stopwatch" style="color:#38bdf8;"></i> <b
+                                                id="chip-router-budget">45s</b>
+                                        </span>
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary btn-sm ai-tuning-btn"
+                                        id="ai-router-default-btn" onclick="AIAgent.resetRouterDefaults()"
+                                        title="Reset router to default (Balanced, 45s, Race ON)">
+                                        <i class="fas fa-rotate-left"></i> Default
+                                    </button>
+
+                                    <button type="button"
+                                        class="btn btn-secondary btn-sm ai-tuning-btn ai-tuning-edit-btn"
+                                        id="ai-router-edit-btn" onclick="AIAgent.toggleRouterEdit()"
+                                        title="Unlock controls to modify">
+                                        <i class="fas fa-pen-to-square"></i> Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="ai-tuning-body" id="ai-router-controls-body">
+                                <!-- Quick Presets Bar -->
+                                <div class="ai-tuning-presets">
+                                    <span class="ai-presets-label"><i class="fas fa-wand-magic-sparkles"></i>
+                                        Presets:</span>
+                                    <button type="button" class="ai-preset-chip"
+                                        onclick="AIAgent.applyRouterPreset('balanced')">
+                                        🎯 Balanced (45s)
+                                    </button>
+                                    <button type="button" class="ai-preset-chip"
+                                        onclick="AIAgent.applyRouterPreset('fast')">
+                                        ⚡ Ultra Fast (15s)
+                                    </button>
+                                    <button type="button" class="ai-preset-chip"
+                                        onclick="AIAgent.applyRouterPreset('deep')">
+                                        🧠 Deep Reasoning (90s)
+                                    </button>
+                                    <button type="button" class="ai-preset-chip"
+                                        onclick="AIAgent.applyRouterPreset('max')">
+                                        ⏳ Max Patience (180s)
+                                    </button>
+                                </div>
+
+                                <div class="ai-tuning-grid">
+                                    <div class="ai-tuning-field">
+                                        <div class="ai-tuning-field-head">
+                                            <label for="ai-router-strategy">
+                                                <i class="fas fa-crosshairs" style="color:#a855f7;"></i> Routing
+                                                Strategy
+                                            </label>
+                                        </div>
+                                        <select id="ai-router-strategy" class="input-control" disabled
+                                            onchange="AIAgent.setRouterStrategy(this.value)">
+                                            <option value="balanced">Balanced (Recommended)</option>
+                                            <option value="smartest">Smartest (High Reasoning)</option>
+                                            <option value="fastest">Fastest (Low Latency LPUs)</option>
+                                            <option value="reliable">Most Reliable (99%+ Success)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="ai-tuning-field">
+                                        <div class="ai-tuning-field-head">
+                                            <label for="ai-router-budget">
+                                                <i class="fas fa-stopwatch" style="color:#38bdf8;"></i> Time Budget
+                                            </label>
+                                            <span class="ai-range-badge" id="ai-router-budget-value">45s</span>
+                                        </div>
+                                        <input type="range" id="ai-router-budget" min="10" max="180" step="5" value="45"
+                                            disabled oninput="AIAgent.handleRouterBudgetInput(this.value)">
+                                        <div class="ai-slider-ticks">
+                                            <span>10s Fast</span>
+                                            <span class="tick-active">45s (Default)</span>
+                                            <span>90s Deep</span>
+                                            <span>180s Max</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; gap:8px;">
+                                    <label class="rt-check"
+                                        title="Start a second model while the first is still thinking — the fastest answer wins">
+                                        <input type="checkbox" id="ai-router-hedge" checked disabled
+                                            onchange="AIAgent.setRouterHedge(this.checked)">
+                                        <span>Race mode (hedging: fastest answer wins)</span>
+                                    </label>
+                                    <button type="button" class="btn btn-secondary btn-sm rt-reset"
+                                        onclick="AIAgent.resetRouterStats()"
+                                        title="Forget learned speed / success stats">
+                                        <i class="fas fa-eraser"></i> Reset stats
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rt-chain-head">
+                            <span>Fallback Chain Order</span>
+                            <span id="ai-router-summary" class="rt-summary"></span>
+                        </div>
+                        <div id="ai-router-chain" class="rt-chain">
+                            <div class="rt-empty">Connect APIs first — the router needs connected keys to build the
+                                auto-switching chain.</div>
+                        </div>
+                        <div class="rt-legend">
+                            <span><i class="rt-dot good"></i> healthy</span>
+                            <span><i class="rt-dot fair"></i> flaky</span>
+                            <span><i class="rt-dot poor"></i> failing</span>
+                            <span><i class="rt-dot down"></i> breaker</span>
+                            <span><i class="rt-dot unknown"></i> new</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="App.closeModal('ai-settings-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="AIAgent.saveSettingsFromModal()" style="background:linear-gradient(135deg, var(--accent, #8b5cf6), #a855f7); border:none;">Save & Apply</button>
+
+            <!-- 🚀 UNIFIED CLEAN MODAL FOOTER 🚀 -->
+            <div class="modal-footer ai-modal-main-footer">
+                <div class="ai-footer-left">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="AIAgent.switchModalTab('apihub-connect')">
+                        <i class="fas fa-plug"></i> Connect APIs (83 Available)
+                    </button>
+                </div>
+                <div class="ai-footer-right" style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="App.closeModal('ai-settings-modal')">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="AIAgent.saveSettingsFromModal()">
+                        <i class="fas fa-check"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         MODAL: AI MODEL SELECTOR (Theme-Harmonized & Feature-Rich)
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay ai-model-picker-overlay" id="ai-model-selector-modal"
+        style="display:none; z-index:250000;" onclick="if(event.target===this) APIHub.closeModelSelector()">
+        <div class="modal-box ai-model-picker-box">
+            <!-- Modal Header -->
+            <div class="ai-picker-head">
+                <div class="ai-picker-head-left">
+                    <div class="ai-picker-badge-top">
+                        <i class="fas fa-robot"></i>
+                        <span id="picker-prov-badge">OpenRouter AI</span>
+                        <span class="ai-picker-verified-pill"><i class="fas fa-check-circle"></i> Key Active</span>
+                    </div>
+                    <h2 class="ai-picker-title">Which models should this key serve?</h2>
+                    <p class="ai-picker-subtitle">
+                        Your <strong id="picker-prov-name">OpenRouter</strong> key is connected. Customize which models
+                        are enabled — the router and AI chat will use them automatically.
+                    </p>
+                </div>
+                <button type="button" class="modal-close ai-picker-close-btn" onclick="APIHub.closeModelSelector()"
+                    title="Close dialog">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Toolbar: Search filter & Category chips -->
+            <div class="ai-picker-toolbar">
+                <div class="ai-picker-search-wrap">
+                    <i class="fas fa-search ai-picker-search-icon"></i>
+                    <input type="text" id="ai-model-picker-search" class="input-control ai-picker-search-input"
+                        placeholder="Search models by name, ID or tag…"
+                        oninput="APIHub.onPickerSearchInput(this.value)">
+                    <button type="button" class="ai-picker-search-clear" id="ai-picker-search-clear"
+                        onclick="APIHub.clearPickerSearch()" style="display:none;" title="Clear search">✕</button>
+                </div>
+                <div class="ai-picker-category-chips" id="ai-picker-chips">
+                    <button type="button" class="ai-picker-chip active" data-filter="all"
+                        onclick="APIHub.setPickerFilter('all')">All (<span id="chip-count-all">11</span>)</button>
+                    <button type="button" class="ai-picker-chip ai-picker-chip-free" data-filter="free"
+                        onclick="APIHub.setPickerFilter('free')" title="Show Free Models only"><i
+                            class="fas fa-gift"></i> Free (<span id="chip-count-free">11</span>)</button>
+                    <button type="button" class="ai-picker-chip ai-picker-chip-paid" data-filter="paid"
+                        onclick="APIHub.setPickerFilter('paid')" title="Show Paid Models only"><i
+                            class="fas fa-coins"></i> Paid (<span id="chip-count-paid">0</span>)</button>
+                    <button type="button" class="ai-picker-chip" data-filter="reasoning"
+                        onclick="APIHub.setPickerFilter('reasoning')"><i class="fas fa-brain"></i> Reasoning</button>
+                    <button type="button" class="ai-picker-chip" data-filter="code"
+                        onclick="APIHub.setPickerFilter('code')"><i class="fas fa-code"></i> Coding</button>
+                    <button type="button" class="ai-picker-chip" data-filter="large"
+                        onclick="APIHub.setPickerFilter('large')"><i class="fas fa-layer-group"></i> High-Ctx</button>
+                    <button type="button" class="ai-picker-chip" data-filter="fast"
+                        onclick="APIHub.setPickerFilter('fast')"><i class="fas fa-bolt"></i> Fast</button>
+                </div>
+            </div>
+
+            <!-- Card Box with Select All and Model List -->
+            <div class="ai-model-picker-card">
+                <div class="ai-picker-select-all-row">
+                    <label class="ai-picker-chk-label">
+                        <input type="checkbox" id="picker-select-all-chk" checked
+                            onchange="APIHub.toggleAllPickerModels(this.checked)">
+                        <span class="ai-picker-select-all-text">Select all models</span>
+                    </label>
+                    <div class="ai-picker-bulk-actions">
+                        <button type="button" class="ai-picker-link-btn"
+                            onclick="APIHub.toggleAllPickerModels(false)">Deselect all</button>
+                        <span class="ai-picker-count-pill" id="ai-model-picker-count">11 of 11 selected</span>
+                    </div>
+                </div>
+
+                <div class="ai-model-picker-list" id="ai-model-picker-list">
+                    <!-- Populated dynamically via APIHub.renderPickerList() -->
+                </div>
+            </div>
+
+            <!-- Custom Model ID Addition Row -->
+            <div class="ai-picker-custom-box">
+                <div class="ai-picker-custom-label">
+                    <i class="fas fa-plus-circle"></i> Need another model? Add any custom model ID:
+                </div>
+                <div class="ai-picker-custom-row">
+                    <input type="text" id="ai-picker-custom-input" class="input-control ai-picker-custom-input"
+                        placeholder="e.g. meta-llama/llama-3.3-70b-instruct or custom-model"
+                        onkeydown="if(event.key==='Enter') APIHub.addCustomPickerModel()">
+                    <button type="button" class="btn btn-secondary ai-picker-custom-btn"
+                        onclick="APIHub.addCustomPickerModel()">
+                        <i class="fas fa-plus"></i> Add Model
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Notice text & Footer Bar -->
+            <div class="ai-picker-footer-bar">
+                <div class="ai-picker-notice-wrap">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Everything selected — saved locally. New catalog models automatically use this key.</span>
+                </div>
+
+                <!-- Modal Action Buttons (Cancel / Save) -->
+                <div class="ai-picker-footer-btns">
+                    <button type="button" class="btn btn-secondary" onclick="APIHub.closeModelSelector()">Not
+                        now</button>
+                    <button type="button" class="btn btn-primary" id="ai-model-picker-save-btn"
+                        onclick="APIHub.saveModelSelector()">
+                        <i class="fas fa-check"></i> Save &amp; Enable Selected (<span
+                            id="ai-model-picker-save-count">11</span>)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -624,7 +1275,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/markdown/markdown.min.js"></script>
+
     <!-- CodeMirror Addons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
@@ -639,31 +1291,42 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/css-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/javascript-hint.min.js"></script>
 
+    <!-- 🚀 FLOATING QUICK AI AGENT TRIGGER BUTTON 🚀 -->
+    <button class="ai-floating-trigger-btn" onclick="openAIAgentPanel()" title="Open AI Agent Chat (Ctrl + Shift + A)">
+        <i class="fas fa-robot"></i>
+        <span>AI Chat</span>
+    </button>
+
     <!-- 🚀 MODULAR JS APPLICATION SUITE 🚀 -->
-    <script src="js/vfs.js"></script>
-    <script src="js/bundler.js"></script>
-    <script src="js/editor.js"></script>
-    <script src="js/console.js"></script>
-    <script src="js/packages.js"></script>
-    <script src="js/palette.js"></script>
-    <script src="js/templates.js"></script>
-    <script src="js/ai-agent.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/utils.js?v=6.0"></script>
+    <script src="js/prefs.js?v=8.0"></script>
+    <script src="js/vfs.js?v=6.0"></script>
+    <script src="js/bundler.js?v=6.0"></script>
+    <script src="js/editor.js?v=8.0"></script>
+    <script src="js/console.js?v=6.0"></script>
+    <script src="js/packages.js?v=6.0"></script>
+    <script src="js/palette.js?v=6.0"></script>
+    <script src="js/templates.js?v=6.0"></script>
+    <script src="js/router.js?v=6.0"></script>
+    <script src="js/providers.js?v=6.0"></script>
+    <script src="js/api-hub.js?v=10.0"></script>
+    <script src="js/ai-agent.js?v=10.0"></script>
+    <script src="js/app.js?v=10.0"></script>
 
     <!-- Helper Utilities for inline HTML buttons -->
     <script>
         function appendExt(ext) {
             const input = document.getElementById('new-filename-input');
             let val = input.value.trim();
-            if(!val) val = 'untitled';
-            if(val.includes('.')) val = val.split('.')[0];
+            if (!val) val = 'untitled';
+            if (val.includes('.')) val = val.split('.')[0];
             input.value = val + ext;
             input.focus();
         }
 
         function insertSymbol(sym) {
             const cm = EditorController.getCM();
-            if(!cm) return;
+            if (!cm) return;
             const doc = cm.getDoc();
             doc.replaceRange(sym, doc.getCursor());
             cm.focus();
@@ -672,7 +1335,7 @@
         function openThemePicker() {
             CommandPalette.open();
             const input = document.getElementById('palette-input');
-            if(input) {
+            if (input) {
                 input.value = 'Theme: ';
                 input.dispatchEvent(new Event('input'));
             }
@@ -680,18 +1343,56 @@
 
         function handleFileUpload(event) {
             const files = event.target.files;
-            if(!files || files.length === 0) return;
-            for(let file of files) {
+            if (!files || files.length === 0) return;
+            for (let file of files) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    VFS.set(file.name, e.target.result);
+                reader.onload = function (e) {
+                    // FIX: keep the relative folder structure instead of
+                    // flattening everything into the project root.
+                    const relPath = (file.webkitRelativePath || file.name)
+                        .replace(/\\/g, '/')
+                        .replace(/^[^/]+\//, '');   // strip the upload root folder
+                    const targetPath = relPath || file.name;
+
+                    VFS.set(targetPath, e.target.result);
                     App.renderExplorer();
-                    App.openFile(file.name);
-                    App.showToast(`Imported ${file.name}`, 'success');
+                    App.openFile(targetPath);
+                    App.showToast(`Imported ${targetPath}`, 'success');
                 };
                 reader.readAsText(file);
+            }
+            // Allow re-importing the same file again
+            event.target.value = '';
+        }
+
+        function openAISettingsModal(tab) {
+            tab = tab || 'agent';
+            const modal = document.getElementById('ai-settings-modal');
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+                modal.style.opacity = '1';
+                modal.style.zIndex = '200000';
+            }
+            if (typeof AIAgent !== 'undefined' && AIAgent.openSettings) {
+                AIAgent.openSettings(tab);
+            } else if (typeof App !== 'undefined' && App.openModal) {
+                App.openModal('ai-settings-modal');
+            }
+            if (typeof APIHub !== 'undefined' && APIHub.render) {
+                APIHub.render();
+            }
+        }
+
+        function openAIAgentPanel() {
+            if (typeof AIAgent !== 'undefined' && AIAgent.togglePanel) {
+                AIAgent.togglePanel();
+            } else {
+                const panel = document.getElementById('ai-studio-panel');
+                if (panel) panel.classList.toggle('active');
             }
         }
     </script>
 </body>
+
 </html>

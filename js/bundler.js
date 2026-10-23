@@ -77,6 +77,68 @@ const Bundler = (function() {
 `;
     }
 
+    // ── Escaping helpers ────────────────────────────────────────────────
+    function escapeRegExp(str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /** Neutralise a premature </script> inside inlined JavaScript. */
+    function escapeForInlineScript(code) {
+        return String(code === null || code === undefined ? '' : code)
+            .replace(/<\/(script)/gi, '<\\/$1');
+    }
+
+    /** Neutralise a premature </style> inside inlined CSS. */
+    function escapeForInlineStyle(css) {
+        return String(css === null || css === undefined ? '' : css)
+            .replace(/<\/(style)/gi, '<\\/$1');
+    }
+
+    function escapeAttrValue(str) {
+        return String(str).replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Find the <link>/<script> tag that references the given project file.
+     * 1) exact project path first ("css/style.css")
+     * 2) basename fallback, but ONLY when the basename is unique in the project
+     *    (prevents "css/style.css" from matching "js/style.css")
+     */
+    function findLinkedTag(html, filePath, isScript) {
+        const tag = isScript ? 'script' : 'link';
+        const attr = isScript ? 'src' : 'href';
+        const escapedPath = escapeRegExp(filePath);
+        const closing = isScript ? '(?:<\\/script>)?' : '';
+
+        let re = new RegExp(
+            `<${tag}([^>]*?)\\s${attr}\\s*=\\s*["'](?:\\.\\/)?${escapedPath}["']([^>]*)>${closing}`,
+            'gi'
+        );
+        if (re.test(html)) return re;
+
+        const fileName = filePath.split('/').pop();
+        const allPaths = VFS.getAllPaths();
+        const sameName = allPaths.filter(p => p === fileName || p.endsWith('/' + fileName));
+
+        if (sameName.length === 1) {
+            const escapedName = escapeRegExp(fileName);
+            re = new RegExp(
+                `<${tag}([^>]*?)\\s${attr}\\s*=\\s*["'](?:\\.\\/)?(?:[^"']*\\/)?${escapedName}["']([^>]*)>${closing}`,
+                'gi'
+            );
+            if (re.test(html)) return re;
+        }
+
+        return null;
+    }
+
+    function injectBefore(html, anchor, tag) {
+        if (html.includes(anchor)) {
+            return html.replace(anchor, `${tag}\n${anchor}`);
+        }
+        return tag + '\n' + html;
+    }
+
     function bundle(entryHtmlPath = "index.html") {
         const allPaths = VFS.getAllPaths();
         let targetHtml = entryHtmlPath;
@@ -94,41 +156,39 @@ const Bundler = (function() {
         // 1. Resolve and replace CSS links with inline <style>
         allPaths.filter(p => p.endsWith('.css')).forEach(cssPath => {
             const cssContent = VFS.get(cssPath).content;
-            const styleTag = `<style data-bundle-file="${cssPath}">\n${cssContent}\n</style>`;
-            
-            // Regex to match relative or exact link tag
-            const fileName = cssPath.split('/').pop();
-            const linkRegex = new RegExp(`<link[^>]*href=["'](?:\\.\\/)?(?:[^"']*\\/)?${fileName}["'][^>]*>`, 'gi');
+            const styleTag = `<style data-bundle-file="${escapeAttrValue(cssPath)}">\n${escapeForInlineStyle(cssContent)}\n</style>`;
 
-            if (linkRegex.test(html)) {
-                html = html.replace(linkRegex, styleTag);
-            } else if (!html.includes(`data-bundle-file="${cssPath}"`)) {
+            const linkRegex = findLinkedTag(html, cssPath, false);
+            if (linkRegex) {
+                html = html.replace(linkRegex, () => styleTag);
+            } else {
                 // Auto-inject if not explicitly linked
-                if (html.includes('</head>')) {
-                    html = html.replace('</head>', `${styleTag}\n</head>`);
-                } else {
-                    html = `${styleTag}\n` + html;
-                }
+                html = injectBefore(html, '</head>', styleTag);
             }
         });
 
         // 2. Resolve and replace JS scripts with inline <script>
-        allPaths.filter(p => p.endsWith('.js')).forEach(jsPath => {
+        //    (attributes such as type="text/babel" are PRESERVED)
+        allPaths.filter(p => p.endsWith('.js') || p.endsWith('.mjs')).forEach(jsPath => {
             const jsContent = VFS.get(jsPath).content;
-            const scriptTag = `<script data-bundle-file="${jsPath}">\n${jsContent}\n<\/script>`;
-            
-            const fileName = jsPath.split('/').pop();
-            const scriptRegex = new RegExp(`<script[^>]*src=["'](?:\\.\\/)?(?:[^"']*\\/)?${fileName}["'][^>]*><\\/script>`, 'gi');
+            const safeJs = escapeForInlineScript(jsContent);
 
-            if (scriptRegex.test(html)) {
-                html = html.replace(scriptRegex, scriptTag);
-            } else if (!html.includes(`data-bundle-file="${jsPath}"`)) {
+            const scriptRegex = findLinkedTag(html, jsPath, true);
+            if (scriptRegex) {
+                html = html.replace(scriptRegex, (match, preAttrs, postAttrs) => {
+                    const attrs = `${preAttrs || ''} ${postAttrs || ''}`.replace(/\s+/g, ' ').trim();
+                    const cleaned = attrs
+                        .replace(/\ssrc\s*=\s*["'][^"']*["']/i, '')
+                        .replace(/\sdefer\b/i, '')
+                        .replace(/\sasync\b/i, '')
+                        .trim();
+                    const newAttrs = cleaned ? ` ${cleaned}` : '';
+                    return `<script${newAttrs} data-bundle-file="${escapeAttrValue(jsPath)}">\n${safeJs}\n<\/script>`;
+                });
+            } else {
                 // Auto-inject at end of body if not linked
-                if (html.includes('</body>')) {
-                    html = html.replace('</body>', `${scriptTag}\n</body>`);
-                } else {
-                    html = html + `\n${scriptTag}`;
-                }
+                const scriptTag = `<script data-bundle-file="${escapeAttrValue(jsPath)}">\n${safeJs}\n<\/script>`;
+                html = injectBefore(html, '</body>', scriptTag);
             }
         });
 

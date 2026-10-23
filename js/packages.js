@@ -97,17 +97,27 @@ const PackageManager = (function() {
         }
     ];
 
+    /**
+     * Resolves the HTML file that should receive injected CDN tags:
+     * the currently open HTML file, otherwise index.html.
+     */
+    function getInjectionTarget() {
+        const current = App.getCurrentFile ? App.getCurrentFile() : null;
+        if (current && /\.html?$/i.test(current) && VFS.get(current)) return current;
+        return VFS.get('index.html') ? 'index.html' : null;
+    }
+
     function injectPackage(pkgId) {
         const pkg = LIBRARIES.find(l => l.id === pkgId);
         if (!pkg) return;
 
-        let indexHtml = VFS.get('index.html');
-        if (!indexHtml) {
-            App.showToast('No index.html found to inject package!', 'error');
+        const target = getInjectionTarget();
+        if (!target) {
+            App.showToast('No HTML file found to inject package!', 'error');
             return;
         }
 
-        let content = indexHtml.content;
+        let content = VFS.get(target).content;
         if (content.includes(pkg.name) || content.includes(pkg.tag)) {
             App.showToast(`${pkg.name} is already installed!`, 'info');
             return;
@@ -119,13 +129,13 @@ const PackageManager = (function() {
             content = `${pkg.tag}\n` + content;
         }
 
-        VFS.set('index.html', content);
-        if (App.getCurrentFile() === 'index.html') {
+        VFS.set(target, content);
+        if (App.getCurrentFile() === target) {
             EditorController.setContent(content, 'htmlmixed');
         }
 
         App.updatePreview();
-        App.showToast(`Installed ${pkg.name} into index.html!`, 'success');
+        App.showToast(`Installed ${pkg.name} into ${target}!`, 'success');
     }
 
     function injectCustomUrl(url) {
@@ -139,18 +149,26 @@ const PackageManager = (function() {
             tag = `<script src="${url}"><\/script>`;
         }
 
-        let indexHtml = VFS.get('index.html');
-        if (!indexHtml) return;
+        const target = getInjectionTarget();
+        if (!target) {
+            App.showToast('No HTML file found to inject package!', 'error');
+            return;
+        }
 
-        let content = indexHtml.content;
+        let content = VFS.get(target).content;
+        if (content.includes(url)) {
+            App.showToast('That CDN link is already installed!', 'info');
+            return;
+        }
+
         if (content.includes('</head>')) {
             content = content.replace('</head>', `  ${tag}\n</head>`);
         } else {
             content = `${tag}\n` + content;
         }
 
-        VFS.set('index.html', content);
-        if (App.getCurrentFile() === 'index.html') {
+        VFS.set(target, content);
+        if (App.getCurrentFile() === target) {
             EditorController.setContent(content, 'htmlmixed');
         }
 
