@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Master Web IDE Ultra - CodeMirror Editor Customization
+   ========================================================================== */
+
+#editor-container {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-editor);
+    position: relative;
+}
+
+.CodeMirror {
+    height: 100% !important;
+    font-size: var(--editor-font-size, 13px);
+    font-family: var(--font-code) !important;
+    line-height: 1.6 !important;
+    background: var(--bg-editor) !important;
+    color: var(--text-main) !important;
+}
+
+/* 📱 Soft-wrap hanging indent: wrapped lines indent cleanly by ~20px */
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+    padding-left: 20px !important;
+    text-indent: -20px !important;
+}
+
+/* Gutters & Line Numbers */
+.CodeMirror-gutters {
+    background: var(--bg-editor) !important;
+    border-right: 1px solid var(--border) !important;
+    white-space: nowrap;
+    padding: 0 4px;
+}
+
+.CodeMirror-linenumber {
+    color: var(--text-faint) !important;
+    font-size: 12.5px;
+    padding: 0 6px 0 2px;
+}
+
+/* Active Line Highlight */
+.CodeMirror-activeline-background {
+    background: rgba(255, 255, 255, 0.035) !important;
+}
+
+/* Selection */
+.CodeMirror-selected {
+    background: rgba(var(--accent-rgb), 0.25) !important;
+}
+
+.CodeMirror-focused .CodeMirror-selected {
+    background: rgba(var(--accent-rgb), 0.3) !important;
+}
+
+/* Matching Brackets & Tags */
+.CodeMirror-matchingbracket {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
+
+.CodeMirror-matchingtag {
+    background: rgba(var(--accent-rgb), 0.2);
+}
+
+/* Cursor */
+.CodeMirror-cursor {
+    border-left: 2px solid var(--accent) !important;
+}
+
+/* Autocomplete Hints Popup */
+.CodeMirror-hints {
+    background: var(--bg-sidebar) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+    font-family: var(--font-code) !important;
+    font-size: 13px !important;
+    padding: 4px !important;
+    z-index: 5000 !important;
+}
+
+.CodeMirror-hint {
+    color: var(--text-main) !important;
+    padding: 5px 10px !important;
+    border-radius: 5px !important;
+    transition: 0.1s;
+}
+
+.CodeMirror-hint-active {
+    background: rgba(var(--accent-rgb), 0.2) !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+/* Find & Replace Dialog (Ctrl + F) */
+.CodeMirror-dialog {
+    background: var(--bg-sidebar) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-main) !important;
+    font-family: var(--font-ui) !important;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+    border-radius: 0 0 8px 8px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    z-index: 2000 !important;
+}
+
+.CodeMirror-dialog input {
+    background: var(--bg-editor) !important;
+    border: 1px solid var(--border) !important;
+    color: #fff !important;
+    font-family: var(--font-code) !important;
+    font-size: 12.5px !important;
+    padding: 5px 8px !important;
+    border-radius: 4px !important;
+    outline: none !important;
+}
+
+.CodeMirror-dialog input:focus {
+    border-color: var(--accent) !important;
+}
+
+.CodeMirror-dialog button {
+    background: var(--bg-tab) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-main) !important;
+    padding: 4px 10px !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    font-size: 12px !important;
+}
+
+.CodeMirror-dialog button:hover {
+    background: var(--accent) !important;
+    color: #0c0e14 !important;
+}
+
+@media (max-width: 768px) {
+    .CodeMirror {
+        font-size: 12px !important;
+        line-height: 1.5 !important;
+    }
+
+    .CodeMirror-linenumber {
+        font-size: 10.5px !important;
+        padding: 0 4px 0 1px !important;
+    }
+}
+
+/* Custom Scrollbars for CodeMirror Horizontal & Vertical scroll */
+.CodeMirror-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.CodeMirror-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.CodeMirror-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 4px;
+}
+
+.CodeMirror-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.32);
+}
+
+/* Inline Color Swatches */
+.cm-color-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    margin-right: 4px;
+    vertical-align: middle;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.cm-color-swatch:hover {
+    transform: scale(1.3);
+    border-color: #fff;
+}

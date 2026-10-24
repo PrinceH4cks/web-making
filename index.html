@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Master Web IDE Ultra - Next-Gen Studio</title>
+    <meta name="theme-color" content="#0d0f14">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="manifest" href="manifest.json">
+    <title>Prince Studio - Web IDE</title>
 
     <!-- Google Typography & FontAwesome 6 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,8 +45,10 @@
     <link rel="stylesheet" href="css/preview.css?v=8.0">
     <link rel="stylesheet" href="css/console.css?v=7.0">
     <link rel="stylesheet" href="css/components.css?v=7.0">
-    <link rel="stylesheet" href="css/ai-agent.css?v=10.0">
+    <link rel="stylesheet" href="css/ai-agent.css?v=11.0">
     <link rel="stylesheet" href="css/api-hub.css?v=7.0">
+    <link rel="stylesheet" href="css/inspector.css?v=1.0">
+    <link rel="stylesheet" href="css/assets.css?v=1.0">
 </head>
 
 <body data-theme="dracula">
@@ -77,7 +82,7 @@
             <div class="brand-logo" onclick="CommandPalette.open()"
                 title="Click to open Command Palette (Ctrl+Shift+P)">
                 <i class="fas fa-cube"></i>
-                <span>Master IDE</span>
+                <span>Prince Studio</span>
                 <span class="ultra-badge">ULTRA</span>
             </div>
         </div>
@@ -145,6 +150,30 @@
                 <span class="hide-mobile">Templates</span>
             </button>
 
+            <!-- Web Materials & Icons -->
+            <button class="btn hide-mobile" onclick="AssetManager.openModal()" title="Web Materials & Icons (Click to Copy)">
+                <i class="fas fa-shapes" style="color: #00f2fe;"></i>
+                <span class="hide-mobile">Materials</span>
+            </button>
+
+            <!-- Project Checkpoints (Time Machine) -->
+            <button class="btn hide-mobile" onclick="Checkpoints.openModal()" title="Project Snapshots (Time Machine)">
+                <i class="fas fa-history" style="color: #f59e0b;"></i>
+                <span class="hide-mobile">History</span>
+            </button>
+
+            <!-- Code Card Snippet Generator -->
+            <button class="btn hide-mobile" onclick="CodeCard.openModal()" title="Export Code as High-Res Card">
+                <i class="fas fa-camera" style="color: #ec4899;"></i>
+                <span class="hide-mobile">Card</span>
+            </button>
+
+            <!-- Test Live on Phone QR -->
+            <button class="btn hide-mobile" onclick="QRBridge.openModal()" title="Test Live on Physical Phone">
+                <i class="fas fa-qrcode" style="color: #10b981;"></i>
+                <span class="hide-mobile">QR</span>
+            </button>
+
             <!-- Export Project to ZIP -->
             <button class="btn" onclick="VFS.exportZip()" title="Download Full Project as ZIP">
                 <i class="fas fa-download"></i>
@@ -167,6 +196,11 @@
         <ul class="mobile-actions-menu" id="mobile-actions-menu">
             <li class="mobile-menu-item" onclick="openAIAgentPanel()"><i class="fas fa-robot"></i> AI Agent Studio
             </li>
+            <li class="mobile-menu-item" onclick="Inspector.toggle()"><i class="fas fa-crosshairs"></i> Inspect Element (F12)</li>
+            <li class="mobile-menu-item" onclick="AssetManager.openModal()"><i class="fas fa-shapes"></i> Web Materials &amp; Icons</li>
+            <li class="mobile-menu-item" onclick="Checkpoints.openModal()"><i class="fas fa-history"></i> Checkpoints (Time Machine)</li>
+            <li class="mobile-menu-item" onclick="CodeCard.openModal()"><i class="fas fa-camera"></i> Export Code Card</li>
+            <li class="mobile-menu-item" onclick="QRBridge.openModal()"><i class="fas fa-qrcode"></i> Test Live on Phone</li>
             <li class="mobile-menu-item" onclick="AIAgent.openSettings()"><i class="fas fa-key"></i> AI API Key & Model
             </li>
             <li class="mobile-menu-item" onclick="APIHub.open()"><i class="fas fa-plug"></i> API Connect Hub (Multi-API)
@@ -293,6 +327,9 @@
                         </div>
 
                         <div class="preview-tools">
+                            <i class="fas fa-crosshairs" title="Inspect Element (DOM & CSS)" onclick="Inspector.toggle()" id="icon-inspect"></i>
+                            <i class="fas fa-qrcode" title="Scan QR Code to Open on Phone" onclick="QRBridge.openModal()" id="icon-qr"></i>
+                            <div class="tool-divider"></div>
                             <i class="fas fa-mobile-alt" title="Mobile Frame (iPhone)"
                                 onclick="App.setDeviceSize('mobile')" id="icon-mobile"></i>
                             <i class="fas fa-tablet-alt" title="Tablet Frame (iPad)"
@@ -318,6 +355,28 @@
                             <iframe id="pc-preview-frame"
                                 sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
                         </div>
+                    </div>
+
+                    <!-- 🔍 IN-APP ELEMENT & CSS INSPECTOR (F12) 🔍 -->
+                    <div class="inspector-drawer" id="inspector-drawer">
+                        <div class="inspector-header">
+                            <div class="inspector-target-info">
+                                <span class="inspector-target-badge" id="inspector-badge">&lt;element&gt;</span>
+                                <span class="inspector-breadcrumbs" id="inspector-breadcrumbs">body</span>
+                            </div>
+                            <div class="inspector-actions">
+                                <button class="inspector-btn primary" onclick="Inspector.jumpToCode()" title="Jump to code location in editor">
+                                    <i class="fas fa-location-crosshairs"></i> <span>Find in Code</span>
+                                </button>
+                                <i class="fas fa-times inspector-close-btn" onclick="Inspector.closeDrawer()" title="Close Inspector"></i>
+                            </div>
+                        </div>
+                        <div class="inspector-tabs-bar">
+                            <span class="inspector-tab active" data-tab="styles" onclick="Inspector.setTab('styles')"><i class="fas fa-palette"></i> Styles</span>
+                            <span class="inspector-tab" data-tab="box-model" onclick="Inspector.setTab('box-model')"><i class="fas fa-vector-square"></i> Box Model</span>
+                            <span class="inspector-tab" data-tab="html" onclick="Inspector.setTab('html')"><i class="fas fa-code"></i> HTML</span>
+                        </div>
+                        <div class="inspector-body" id="inspector-tab-content"></div>
                     </div>
                 </div>
 
@@ -407,8 +466,8 @@
         <!-- Main Chat Stream -->
         <div class="ai-chat-stream" id="ai-chat-stream"></div>
 
-        <!-- Thinking / Running Indicator -->
-        <div class="ai-thinking" id="ai-thinking">
+        <!-- Thinking / Running Indicator (Moved inside chat stream as Gemini Animation) -->
+        <div class="ai-thinking" id="ai-thinking" style="display:none !important;">
             <div class="ai-spinner"></div>
             <span id="ai-thinking-text">AI Agent is writing code & executing tools...</span>
         </div>
@@ -531,8 +590,8 @@
             </div>
             <div class="modal-content">
                 <div class="input-group">
-                    <label>File Path (e.g. app.js, css/theme.css, components/card.html)</label>
-                    <input type="text" id="new-filename-input" class="input-control" placeholder="filename.ext"
+                    <label>File Name / Path</label>
+                    <input type="text" id="new-filename-input" class="input-control" placeholder="e.g. app.js or css/style.css"
                         onkeydown="if(event.key==='Enter') App.confirmCreateFile()">
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -559,8 +618,8 @@
             </div>
             <div class="modal-content">
                 <div class="input-group">
-                    <label>Folder Path (e.g. assets, components, utils)</label>
-                    <input type="text" id="new-foldername-input" class="input-control" placeholder="folder-name"
+                    <label>Folder Name / Path</label>
+                    <input type="text" id="new-foldername-input" class="input-control" placeholder="e.g. components"
                         onkeydown="if(event.key==='Enter') App.confirmCreateFolder()">
                 </div>
             </div>
@@ -603,7 +662,7 @@
             </div>
             <div class="modal-content">
                 <div class="input-group">
-                    <label>Add Custom CDN Link (CSS or JS URL)</label>
+                    <label>Custom CDN URL</label>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="custom-cdn-url" class="input-control"
                             placeholder="https://cdn.example.com/library.js">
@@ -616,7 +675,7 @@
 
                 <label
                     style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
-                    Popular 1-Click Libraries
+                    Popular Libraries
                 </label>
                 <div class="package-grid" id="package-grid-container"></div>
             </div>
@@ -631,14 +690,10 @@
         <div class="modal-box" style="max-width:640px;">
             <div class="modal-handle"></div>
             <div class="modal-header">
-                <h3><i class="fas fa-shapes"></i> High-End Starter Templates</h3>
+                <h3><i class="fas fa-shapes"></i> Starter Templates</h3>
                 <i class="fas fa-times modal-close" onclick="App.closeModal('templates-modal')"></i>
             </div>
             <div class="modal-content">
-                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-                    Select a starter to jumpstart your development. Loading a template will replace files in your
-                    workspace.
-                </p>
                 <div class="template-grid" id="template-grid-container"></div>
             </div>
             <div class="modal-footer">
@@ -677,11 +732,11 @@
                         onchange="EditorController.setTabSize(this.value)">
                 </div>
                 <div class="input-group">
-                    <label>Code Line Wrapping (Word Wrap)</label>
+                    <label>Code Line Wrapping</label>
                     <select class="input-control" id="line-wrapping-select"
                         onchange="EditorController.setLineWrapping(this.value === 'true')">
-                        <option value="false">Off — Single Line (Scroll Horizontally) [Default]</option>
-                        <option value="true">On — Wrap Long Lines</option>
+                        <option value="false">Off (Horizontal Scroll)</option>
+                        <option value="true">On (Word Wrap)</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -699,20 +754,16 @@
 
                 <!-- 🛡️ DATA PRIVACY -->
                 <div
-                    style="margin-top:18px; padding:14px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,0.02);">
+                    style="margin-top:14px; padding:12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.02);">
                     <div
-                        style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; margin-bottom:8px;">
+                        style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; margin-bottom:6px;">
                         <i class="fas fa-shield-halved" style="color:var(--accent,#8b5cf6);"></i>
-                        Your Data &amp; Privacy
+                        Privacy &amp; Data
                     </div>
-                    <p style="font-size:11.5px; color:var(--text-muted); line-height:1.6; margin-bottom:12px;">
-                        Master Web IDE Ultra has <b>no backend server</b>. Everything you create — project files,
-                        your AI API key, and chat history — is stored <b>only in this browser on this device</b>
-                        (localStorage). Nothing is uploaded to us, and no user can ever see another user's data.
-                        The only data that leaves your device is what you explicitly send to your chosen AI provider
-                        when you press Send in the AI Agent.
+                    <p style="font-size:11px; color:var(--text-muted); line-height:1.45; margin-bottom:10px;">
+                        All files &amp; keys are stored locally on your device. Nothing is uploaded to external servers.
                     </p>
-                    <button class="btn btn-danger" onclick="App.clearAllLocalData()">
+                    <button class="btn btn-danger" onclick="App.clearAllLocalData()" style="padding:6px 12px; font-size:11px;">
                         <i class="fas fa-trash-can"></i> Erase All Local Data
                     </button>
                 </div>
@@ -790,17 +841,17 @@
             <!-- 🚀 CLEAN 4-TAB NAVIGATION STRIP 🚀 -->
             <div class="ai-modal-tabs" id="ai-modal-tabs">
                 <button class="ai-modal-tab active" id="tab-btn-agent" onclick="AIAgent.switchModalTab('agent')">
-                    <i class="fas fa-robot"></i> AI Agent
+                    <i class="fas fa-robot"></i> Agent
                 </button>
                 <button class="ai-modal-tab" id="tab-btn-apihub-connect"
                     onclick="AIAgent.switchModalTab('apihub-connect')">
-                    <i class="fas fa-plug"></i> Connect APIs (83)
+                    <i class="fas fa-plug"></i> APIs (83)
                 </button>
                 <button class="ai-modal-tab" id="tab-btn-router" onclick="AIAgent.switchModalTab('router')">
-                    <i class="fas fa-route"></i> Auto Router
+                    <i class="fas fa-route"></i> Router
                 </button>
                 <button class="ai-modal-tab" id="tab-btn-apihub-usage" onclick="AIAgent.switchModalTab('apihub-usage')">
-                    <i class="fas fa-chart-pie"></i> Usage &amp; Quota
+                    <i class="fas fa-chart-pie"></i> Usage
                 </button>
             </div>
 
@@ -808,26 +859,22 @@
                 <!-- TAB 0: AI AGENT SETTINGS -->
                 <div id="ai-tab-agent" class="ai-modal-tab-content active" style="display:block;">
                     <div class="ai-clean-head">
-                        <div>
-                            <h4><i class="fas fa-robot"></i> AI Code Agent</h4>
-                            <span class="ai-clean-sub">Select provider &amp; model or use Auto Router across all
-                                connected APIs.</span>
-                        </div>
+                        <h4><i class="fas fa-robot"></i> AI Code Agent</h4>
                         <span class="conn-badge conn-idle" id="ai-agent-connected-badge">
                             <i class="fas fa-plug"></i>
-                            <span id="ai-agent-connected-count">Checking APIs...</span>
+                            <span id="ai-agent-connected-count">0/83 Connected</span>
                         </span>
                     </div>
 
                     <!-- Connected Providers Mini Status Bar -->
                     <div id="ai-connected-summary-box" class="ai-connected-summary-box"></div>
 
-                    <div class="ai-config-grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;">
+                    <div class="ai-config-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                         <div class="input-group">
                             <label for="ai-agent-provider-select"><i class="fas fa-server"></i> Active Provider</label>
                             <select id="ai-agent-provider-select" class="input-control"
                                 onchange="AIAgent.handleAgentProviderChange(this.value)">
-                                <option value="auto">⚡ All Providers (Auto Router Mode)</option>
+                                <option value="auto">⚡ Auto (All Providers)</option>
                                 <optgroup id="ai-agent-connected-optgroup" label="Connected Providers">
                                 </optgroup>
                             </select>
@@ -837,7 +884,7 @@
                             <label for="ai-agent-model-select"><i class="fas fa-microchip"></i> Active Model</label>
                             <select id="ai-agent-model-select" class="input-control"
                                 onchange="AIAgent.handleAgentModelChange(this.value)">
-                                <option value="auto">⚡ Auto (Best Live Model)</option>
+                                <option value="auto">⚡ Auto (Best Model)</option>
                             </select>
                         </div>
                     </div>
@@ -849,15 +896,11 @@
                                 <div class="ai-tuning-icon">
                                     <i class="fas fa-sliders"></i>
                                 </div>
-                                <div>
-                                    <div class="ai-tuning-title">
-                                        <span>Engine Fine-Tuning</span>
-                                        <span class="ai-tuning-state-badge locked" id="ai-tuning-state-badge">
-                                            <i class="fas fa-lock"></i> Locked
-                                        </span>
-                                    </div>
-                                    <div class="ai-tuning-sub">Accuracy, creativity &amp; autonomous tool execution
-                                        limits</div>
+                                <div class="ai-tuning-title">
+                                    <span>Engine Tuning</span>
+                                    <span class="ai-tuning-state-badge locked" id="ai-tuning-state-badge">
+                                        <i class="fas fa-lock"></i> Locked
+                                    </span>
                                 </div>
                             </div>
 
@@ -979,10 +1022,7 @@
                                 </span>
                             </div>
                             <div id="ai-running-model-name" class="ai-router-live-name">
-                                ⚡ Auto Router Active (All Connected APIs)
-                            </div>
-                            <div id="ai-running-model-sub" class="ai-router-live-sub">
-                                Will automatically pick the best live model among all connected APIs upon prompt.
+                                ⚡ Auto Router Active
                             </div>
                         </div>
 
@@ -1005,15 +1045,11 @@
                                         style="background:linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(139, 92, 246, 0.1)); border-color:rgba(56, 189, 248, 0.35); color:#38bdf8;">
                                         <i class="fas fa-sliders"></i>
                                     </div>
-                                    <div>
-                                        <div class="ai-tuning-title">
-                                            <span>Router Policy &amp; Time Budget</span>
-                                            <span class="ai-tuning-state-badge locked" id="ai-router-state-badge">
-                                                <i class="fas fa-lock"></i> Locked
-                                            </span>
-                                        </div>
-                                        <div class="ai-tuning-sub">Priority strategy, maximum execution budget &amp;
-                                            race hedging</div>
+                                    <div class="ai-tuning-title">
+                                        <span>Router Policy</span>
+                                        <span class="ai-tuning-state-badge locked" id="ai-router-state-badge">
+                                            <i class="fas fa-lock"></i> Locked
+                                        </span>
                                     </div>
                                 </div>
 
@@ -1167,11 +1203,7 @@
                         <span id="picker-prov-badge">OpenRouter AI</span>
                         <span class="ai-picker-verified-pill"><i class="fas fa-check-circle"></i> Key Active</span>
                     </div>
-                    <h2 class="ai-picker-title">Which models should this key serve?</h2>
-                    <p class="ai-picker-subtitle">
-                        Your <strong id="picker-prov-name">OpenRouter</strong> key is connected. Customize which models
-                        are enabled — the router and AI chat will use them automatically.
-                    </p>
+                    <h2 class="ai-picker-title"><i class="fas fa-microchip"></i> Select Active Models</h2>
                 </div>
                 <button type="button" class="modal-close ai-picker-close-btn" onclick="APIHub.closeModelSelector()"
                     title="Close dialog">
@@ -1215,7 +1247,7 @@
                     <label class="ai-picker-chk-label">
                         <input type="checkbox" id="picker-select-all-chk" checked
                             onchange="APIHub.toggleAllPickerModels(this.checked)">
-                        <span class="ai-picker-select-all-text">Select all models</span>
+                        <span class="ai-picker-select-all-text">Select all</span>
                     </label>
                     <div class="ai-picker-bulk-actions">
                         <button type="button" class="ai-picker-link-btn"
@@ -1232,34 +1264,32 @@
             <!-- Custom Model ID Addition Row -->
             <div class="ai-picker-custom-box">
                 <div class="ai-picker-custom-label">
-                    <i class="fas fa-plus-circle"></i> Need another model? Add any custom model ID:
+                    <i class="fas fa-plus-circle"></i> Add Custom Model ID
                 </div>
                 <div class="ai-picker-custom-row">
                     <input type="text" id="ai-picker-custom-input" class="input-control ai-picker-custom-input"
-                        placeholder="e.g. meta-llama/llama-3.3-70b-instruct or custom-model"
+                        placeholder="e.g. meta-llama/llama-3.3-70b-instruct"
                         onkeydown="if(event.key==='Enter') APIHub.addCustomPickerModel()">
                     <button type="button" class="btn btn-secondary ai-picker-custom-btn"
                         onclick="APIHub.addCustomPickerModel()">
-                        <i class="fas fa-plus"></i> Add Model
+                        <i class="fas fa-plus"></i> Add
                     </button>
                 </div>
             </div>
 
             <!-- Bottom Notice text & Footer Bar -->
             <div class="ai-picker-footer-bar">
-                <div class="ai-picker-notice-wrap">
+                <div class="ai-picker-notice-wrap" style="display:none;">
                     <i class="fas fa-circle-info"></i>
-                    <span>Everything selected — saved locally. New catalog models automatically use this key.</span>
+                    <span>Everything selected — saved locally.</span>
                 </div>
 
                 <!-- Modal Action Buttons (Cancel / Save) -->
                 <div class="ai-picker-footer-btns">
-                    <button type="button" class="btn btn-secondary" onclick="APIHub.closeModelSelector()">Not
-                        now</button>
+                    <button type="button" class="btn btn-secondary" onclick="APIHub.closeModelSelector()">Not now</button>
                     <button type="button" class="btn btn-primary" id="ai-model-picker-save-btn"
                         onclick="APIHub.saveModelSelector()">
-                        <i class="fas fa-check"></i> Save &amp; Enable Selected (<span
-                            id="ai-model-picker-save-count">11</span>)
+                        <i class="fas fa-check"></i> Save Selected (<span id="ai-model-picker-save-count">11</span>)
                     </button>
                 </div>
             </div>
@@ -1307,11 +1337,17 @@
     <script src="js/packages.js?v=6.0"></script>
     <script src="js/palette.js?v=6.0"></script>
     <script src="js/templates.js?v=6.0"></script>
-    <script src="js/router.js?v=6.0"></script>
-    <script src="js/providers.js?v=6.0"></script>
-    <script src="js/api-hub.js?v=10.0"></script>
-    <script src="js/ai-agent.js?v=10.0"></script>
+    <script src="js/router.js?v=9.0"></script>
+    <script src="js/providers.js?v=7.0"></script>
+    <script src="js/api-hub.js?v=12.0"></script>
+    <script src="js/ai-agent.js?v=15.0"></script>
     <script src="js/app.js?v=10.0"></script>
+    <script src="js/inspector.js?v=1.0"></script>
+    <script src="js/qr.js?v=1.0"></script>
+    <script src="js/assets.js?v=1.0"></script>
+    <script src="js/color-picker.js?v=1.0"></script>
+    <script src="js/code-card.js?v=1.0"></script>
+    <script src="js/checkpoints.js?v=1.0"></script>
 
     <!-- Helper Utilities for inline HTML buttons -->
     <script>
@@ -1391,6 +1427,17 @@
                 const panel = document.getElementById('ai-studio-panel');
                 if (panel) panel.classList.toggle('active');
             }
+        }
+    </script>
+
+    <!-- 📲 PWA Service Worker Registration 📲 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js').catch(function (err) {
+                    console.log('SW registration optional:', err);
+                });
+            });
         }
     </script>
 </body>

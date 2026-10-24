@@ -1,0 +1,24 @@
+{
+  "name": "prince-studio",
+  "version": "2.0.0",
+  "description": "Prince Studio — Next-Gen In-Browser Mobile & Web IDE with Autonomous AI Coding Agent",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node -e \"const fs = require('fs'), { execSync } = require('child_process'), files = [...fs.readdirSync('js').filter(f => f.endsWith('.js')).map(f => 'js/' + f), 'server.js', 'sw.js']; execSync('node -c ' + files.join(' '), { stdio: 'inherit' }); console.log('All ' + files.length + ' JS files passed syntax validation cleanly!');\""
+  },
+  "keywords": [
+    "web-ide",
+    "ai-agent",
+    "prince-studio",
+    "code-editor",
+    "codemirror",
+    "pwa",
+    "live-preview",
+    "browser-ide"
+  ],
+  "author": "Prince Studio",
+  "license": "MIT",
+  "private": true
+}

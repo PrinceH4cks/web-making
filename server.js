@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -40,8 +41,58 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    const parsedUrl = url.parse(req.url);
+    const parsedUrl = url.parse(req.url, true);
     let pathname = decodeURIComponent(parsedUrl.pathname);
+
+    // 🚀 CORS PROXY ENDPOINT FOR MOBILE & DIRECT BROWSER CALLS 🚀
+    if (pathname === '/api/proxy') {
+        const targetUrl = parsedUrl.query ? parsedUrl.query.url : null;
+        if (!targetUrl) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing target url parameter in ?url=' }));
+            return;
+        }
+
+        try {
+            const targetParsed = url.parse(targetUrl);
+            const isHttps = targetParsed.protocol === 'https:';
+            const client = isHttps ? https : http;
+
+            const headers = Object.assign({}, req.headers);
+            delete headers['host'];
+            delete headers['origin'];
+            delete headers['referer'];
+            headers['host'] = targetParsed.host;
+
+            const proxyReq = client.request({
+                protocol: targetParsed.protocol,
+                hostname: targetParsed.hostname,
+                port: targetParsed.port || (isHttps ? 443 : 80),
+                path: targetParsed.path,
+                method: req.method,
+                headers: headers
+            }, (proxyRes) => {
+                const resHeaders = Object.assign({}, proxyRes.headers, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                    'Access-Control-Allow-Headers': '*'
+                });
+                res.writeHead(proxyRes.statusCode, resHeaders);
+                proxyRes.pipe(res);
+            });
+
+            proxyReq.on('error', (err) => {
+                res.writeHead(502, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Proxy request failed: ' + err.message }));
+            });
+
+            req.pipe(proxyReq);
+        } catch (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid URL for proxy: ' + err.message }));
+        }
+        return;
+    }
 
     if (pathname === '/' || pathname === '') {
         pathname = '/index.html';
